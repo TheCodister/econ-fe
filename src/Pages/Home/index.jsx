@@ -22,6 +22,7 @@ const Home = () => {
   useEffect(() => {
     const interval = setInterval(() => {
         // Change the ad every 0.5 seconds
+        // It is very important to change the ad every 0.5 seconds
         setCurrentAd((prevAd) => (prevAd % 4) + 1);
       }, 2000);
 
