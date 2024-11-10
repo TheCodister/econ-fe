@@ -11,6 +11,4 @@ Currently, two official plugins are available:
 - npm install
 - npm run dev
 
-- cd AeonBackend
-- go run main.go
 
