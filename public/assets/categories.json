@@ -1,0 +1,23 @@
+[
+    {
+      "name": "Clothing",
+      "image": "/Images/categories/clothes-crop.jpg"
+    },
+    {
+      "name": "Beauty",
+      "image": "/Images/categories/shoes-crop.jpg"
+    },
+    {
+      "name": "Home Decor",
+      "image": "/Images/categories/appliances-crop.jpg"
+    },
+    {
+      "name": "Kitchen",
+      "image": "/Images/categories/food-crop.jpg"
+    },
+    {
+      "name": "Electronics",
+      "image": "/Images/categories/tech-crop.jpg"
+    }
+  ]
+  

@@ -1,0 +1,177 @@
+// Variables for easier customization
+$font-color: #666;
+$primary-color: #333;
+$secondary-color: #fff;
+$pink-color: #fe3bd4;
+$border-radius: 20px;
+$padding: 40px;
+$breakpoint-mobile: 768px;
+$carousel-img-width: 150px;
+$carousel-img-height: 150px;
+$carousel-gap: 20px;
+
+.about-us-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: $padding;
+  font-family: Arial, sans-serif;
+
+  // Responsive layout for smaller screens
+  @media (max-width: $breakpoint-mobile) {
+    padding: 20px;
+  }
+}
+
+.about-us-content {
+  display: flex;
+  max-width: 1200px;
+  width: 100%;
+  margin-bottom: 50px;
+
+  // Flex direction column on mobile
+  @media (max-width: $breakpoint-mobile) {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+// Left image section styling
+.about-us-image {
+  flex: 1;
+  border-radius: $border-radius;
+  overflow: hidden;
+  // center 
+  display: flex;
+  justify-content: center;
+
+  img {
+    width: 78%;
+    height: auto;
+    border-radius: $border-radius;
+    object-fit: cover;
+
+    @media (max-width: $breakpoint-mobile) {
+      max-width: 90%;
+    }
+  }
+}
+
+// Right text section styling
+.about-us-rightside {
+  flex: 1;
+  padding-left: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  @media (max-width: $breakpoint-mobile) {
+    padding-left: 0;
+    text-align: center;
+    margin-top: 20px;
+  }
+
+  h1 {
+    font-size: 36px;
+    font-weight: 600;
+    margin-bottom: 20px;
+    color: $primary-color;
+
+    @media (max-width: $breakpoint-mobile) {
+      font-size: 28px;
+    }
+  }
+
+  p {
+    font-size: 16px;
+    line-height: 1.6;
+    color: $font-color;
+    margin-bottom: 20px;
+
+    @media (max-width: $breakpoint-mobile) {
+      font-size: 14px;
+    }
+  }
+}
+
+// Bottom carousel styling
+.about-us-carousel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 1200px;
+  width: 100%;
+  margin-top: 30px;
+
+  .carousel-images {
+    display: flex;
+    overflow: hidden;
+    gap: $carousel-gap;
+
+    img {
+      width: $carousel-img-width;
+      height: $carousel-img-height;
+      object-fit: cover;
+      border-radius: 10px;
+      transition: transform 0.3s ease;
+
+      &:hover {
+        transform: scale(1.05);
+        border-radius: 0;
+      }
+
+      @media (max-width: $breakpoint-mobile) {
+        width: 80px;
+        height: 120px;
+      }
+    }
+  }
+
+  .carousel-arrow {
+    background-color: rgb(242, 243, 244);
+    border: 0px solid lighten(rgb(242, 243, 244), 20%);
+    border-radius: 50%;
+    padding: 10px 15px;
+    cursor: pointer;
+    font-size: 18px;
+    transition: background-color 0.3s ease;
+    color: $pink-color;
+    font-weight: 900;
+
+    &:hover {
+      border: 0px solid lighten($pink-color, 20%);
+      background-color: $pink-color;
+      color: white;
+      font-weight: 900;
+    }
+
+    @media (max-width: $breakpoint-mobile) {
+      padding: 8px;
+      font-size: 16px;
+    }
+  }
+
+  .left-arrow {
+    margin-right: $carousel-gap;
+  }
+
+  .right-arrow {
+    margin-left: $carousel-gap;
+  }
+}
+
+// Responsiveness adjustments for tablets
+@media (min-width: $breakpoint-mobile) and (max-width: 1024px) {
+  .about-us-rightside h1 {
+    font-size: 32px;
+  }
+
+  .about-us-rightside p {
+    font-size: 15px;
+  }
+
+  .carousel-images img {
+    max-width: 90px;
+    max-height: 140px;
+  }
+}

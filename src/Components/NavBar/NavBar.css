@@ -1,0 +1,40 @@
+.navbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100vh;
+  width: 14vw;
+  background-color: #fff;
+  border-right: #9b9b9b solid;
+}
+.navbar-button {
+  width: 10vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-self: center;
+  align-items: flex-start;
+  font-size: 1.2rem;
+}
+.navbar img {
+  width: 14vw;
+  height: 17vh;
+  margin-top: 2vw;
+}
+.navbar-butt img {
+  width: 2vw;
+  height: 2vw;
+  margin: 0;
+}
+.navbar-butt {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 0.2em 0.8em;
+  height: 3vw;
+  border-radius: 2em;
+  cursor: pointer;
+}
+.navbar-butt:hover {
+  background-color: #e7e7e7;
+}

@@ -1,0 +1,13 @@
+.grid-products-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px; /* Adjust the gap between products as needed */
+    padding: 10px 20px;
+    margin: 0 10px;
+  }
+  
+  .grid-products-container.small {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    padding: 10px 10px;
+    margin: 0;
+  }

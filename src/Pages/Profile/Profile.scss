@@ -1,0 +1,24 @@
+.profile-content-wrapper {
+    display: flex;
+    justify-content: flex-start; // Align items to the start of the container
+    padding: 20px; // Add some padding
+    margin: 30px;
+    gap: 10px; // Add space between items
+  }
+
+  .customer_profile_form {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 300px;
+    margin-left: 45%;
+    margin-top: 20px;
+    margin-bottom: 20px;
+    margin-left: 5vw;
+    min-width: 35vw;
+}
+
+.component-container {
+    width: 100%;
+}
