@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { Home, Login, Cart, Category, BuyProduct, Store, Profile, AboutUs, CheckOut, Admin, Shipper } from "./Pages";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import AdminDashboard from "./admin/Dashboard";
 import ManageUsers from './admin/ManageUsers';
 import ManageProducts from './admin/ManageProducts';
@@ -38,6 +40,7 @@ function App() {
 
               </Route>
             </Routes>
+            <ToastContainer />
           </div>
         </div>
       </Router>
