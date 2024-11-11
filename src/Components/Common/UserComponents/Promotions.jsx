@@ -52,7 +52,7 @@ const Promotions = () => {
           {promotion.map((promotion) => (
             <li key={promotion.PromotionID} className="promo-item">
               <div className="promo-header">
-                <h3 className="promo-name">{promotion.Name}</h3>
+                <h3 className="promo-name">{promotion.name}</h3>
                 <div className="promo-discount">
                   <span>{Number(promotion.Discount * 100).toFixed(0)}%</span>
                   <span>Off</span>

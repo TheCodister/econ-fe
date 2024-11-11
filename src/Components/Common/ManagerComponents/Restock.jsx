@@ -55,7 +55,7 @@ const Restock = () => {
             </label>
             <input className="form-input" type="text" id="productID" name="ProductID" value={productID} required onChange={(e) => setproductID(e.target.value)} />
             <label className="form-label" >
-              StoreID:
+              storeID:
             </label>
             <input className="form-input" type="text" id="productID" name="ProductID" value={storeID} required onChange={(e) => setstoreID(e.target.value)} />
             <label className="form-label" >

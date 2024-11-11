@@ -1,23 +1,38 @@
 [
-    {
-      "name": "Clothing",
-      "image": "/Images/categories/clothes-crop.jpg"
-    },
-    {
-      "name": "Beauty",
-      "image": "/Images/categories/shoes-crop.jpg"
-    },
-    {
-      "name": "Home Decor",
-      "image": "/Images/categories/appliances-crop.jpg"
-    },
-    {
-      "name": "Kitchen",
-      "image": "/Images/categories/food-crop.jpg"
-    },
-    {
-      "name": "Electronics",
-      "image": "/Images/categories/tech-crop.jpg"
-    }
-  ]
-  
+  {
+      "name": "Vegetable",
+      "image": "/Images/categories/vegetable-crop.jpg"
+  },
+  {
+      "name": "Seafood",
+      "image": "/Images/categories/seafood-crop.jpg"
+  },
+  {
+      "name": "Spice",
+      "image": "/Images/categories/spice-crop.jpg"
+  },
+  {
+      "name": "Grain",
+      "image": "/Images/categories/grain-crop.jpg"
+  },
+  {
+      "name": "Sauce",
+      "image": "/Images/categories/sauce-crop.jpg"
+  },
+  {
+      "name": "Beef",
+      "image": "/Images/categories/beef-crop.jpg"
+  },
+  {
+      "name": "Milk",
+      "image": "/Images/categories/milk-crop.jpg"
+  },
+  {
+      "name": "Fruit",
+      "image": "/Images/categories/fruit-crop.jpg"
+  },
+  {
+      "name": "Pork",
+      "image": "/Images/categories/pork-crop.jpg"
+  }
+]

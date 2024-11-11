@@ -74,7 +74,7 @@ const BuyProduct = () => {
         setPromotions(promotionInfo);
         setTotalDiscount(calculateTotalDiscount(promotionInfo));
       } catch (error) {
-        console.error(`Error fetching promotion info for product ${product.ProductID}:`, error);
+        console.error(`Error fetching promotion info for product ${product.productID}:`, error);
       }
     };
 
@@ -156,7 +156,7 @@ const BuyProduct = () => {
 
     // Check if the product already exists in the cart
     const existingCartItem = state.cart.find(
-      (item) => item.ProductID === product.ProductID && item.StoreID === productAtStore.StoreID
+      (item) => item.productID === product.productID && item.storeID === productAtStore.storeID
     );
   
     if (existingCartItem) {
@@ -171,10 +171,10 @@ const BuyProduct = () => {
   
       // Update the quantity of the existing item in the cart
       dispatch({ type: 'UPDATE_CART_ITEM', payload: { ...existingCartItem, Quantity: newQuantity } });
-      console.log(`Updated quantity of ${product.PName} in the cart: ${newQuantity}`);
+      console.log(`Updated quantity of ${product.pName} in the cart: ${newQuantity}`);
       setQuantity(1); // Reset the quantity to 1 after adding to cart
 
-      toast.success(`Updated quantity of ${product.PName} successfully!`, {
+      toast.success(`Updated quantity of ${product.pName} successfully!`, {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
@@ -188,12 +188,12 @@ const BuyProduct = () => {
     } else {
       // If the product does not exist, add it to the cart
       const purchaseInfo = {
-        ProductID: product.ProductID,
-        PName: product.PName,
+        ProductID: product.productID,
+        PName: product.pName,
         Quantity: quantity,
-        Price: product.Price,
-        StoreID: productAtStore.StoreID,
-        StoreName: store.Name,
+        Price: product.price,
+        storeID: productAtStore.storeID,
+        StoreName: store.name,
         Promotion: promotions,
         TotalDiscount: totalDiscount
         // Add other relevant info
@@ -201,10 +201,10 @@ const BuyProduct = () => {
   
       // Add the new item to the cart
       dispatch({ type: 'ADD_TO_CART', payload: purchaseInfo });
-      console.log(`Added ${quantity} ${product.PName} to the cart.`);
+      console.log(`Added ${quantity} ${product.pName} to the cart.`);
       setQuantity(1); // Reset the quantity to 1 after adding to cart
 
-      toast.success(`Added ${quantity} ${product.PName} to the cart.`, {
+      toast.success(`Added ${quantity} ${product.pName} to the cart.`, {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
@@ -225,7 +225,7 @@ const BuyProduct = () => {
           <>
             <div className="product-image-section">
               {/* Main Product Image */}
-              <img src={selectedImage} alt={product.PName} className="product-image" />
+              <img src={selectedImage} alt={product.pName} className="product-image" />
 
               {/* Thumbnail Images */}
               <div className="product-thumbnails">
@@ -241,30 +241,30 @@ const BuyProduct = () => {
               </div>
             </div>
             <div className='product-info-section'>
-              <Link to={`/Category/${product.Category}`}>
-                <p className='product-category'>{product.Category}</p>
+              <Link to={`/Category/${product.category}`}>
+                <p className='product-category'>{product.category}</p>
               </Link>
-              <h2 className="product-name">{product.PName}</h2>
+              <h2 className="product-name">{product.pName}</h2>
               <div className='info'>
                 <div className="product-info">
                   <div className="">
                     {/* Use Link to navigate to the Store page with productId */}
-                    <Link className='product-category' to={`/Store/${productAtStore.StoreID}`}>
-                      {store?.Name && <p>{store.Name}</p>}
+                    <Link className='product-category' to={`/Store/${productAtStore.storeID}`}>
+                      {store?.name && <p>{store.name}</p>}
                     </Link>
                   {/* Add more details as needed */}
                   </div>
-                  {/* <p>Category: {product.Category}</p> */}
+                  {/* <p>Category: {product.category}</p> */}
                   <p className="product-description">{product.Description}</p>
                   {promotions && promotions.length > 0 ? (
                     <>
-                      <p className="promo-product-price_2">${product.Price.toFixed(2)}</p>
+                      <p className="promo-product-price_2">${product.price.toFixed(2)}</p>
                       <p className="product__disscount_num">{totalDiscount.toFixed(2) * 100}% off</p>
-                      <p className="promo-product-discount_2">${(product.Price * (1 - totalDiscount)).toFixed(2)}</p>
+                      <p className="promo-product-discount_2">${(product.price * (1 - totalDiscount)).toFixed(2)}</p>
                     </>
                   ) : (
                     <>
-                      <p className="product-card-price">${product.Price.toFixed(2)}</p>
+                      <p className="product-card-price">${product.price.toFixed(2)}</p>
                     </>
                   )}
                   <div className='product-at-store'>
@@ -276,8 +276,8 @@ const BuyProduct = () => {
                 {/* Add more details as needed */}
                 {/* Additional Information */}
                 {/* <div className="provider">
-                  <Link to={`/Store/${productAtStore.StoreID}`}>
-                    {store?.Name && <p>Store: {store.Name}</p>}
+                  <Link to={`/Store/${productAtStore.storeID}`}>
+                    {store?.name && <p>Store: {store.name}</p>}
                   </Link>
                 </div> */}
               </div>

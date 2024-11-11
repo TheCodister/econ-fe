@@ -36,7 +36,7 @@ const EditProductDialog = ({ open, handleClose, handleSave, product }) => {
           margin="dense"
           label="Product Name"
           name="pName"
-          value={updatedProduct.PName}
+          value={updatedProduct.pName}
           onChange={handleChange}
           fullWidth
           required
@@ -45,7 +45,7 @@ const EditProductDialog = ({ open, handleClose, handleSave, product }) => {
           margin="dense"
           label="Category"
           name="category"
-          value={updatedProduct.Category}
+          value={updatedProduct.category}
           onChange={handleChange}
           fullWidth
           required
@@ -63,7 +63,7 @@ const EditProductDialog = ({ open, handleClose, handleSave, product }) => {
           label="Price"
           name="price"
           type="number"
-          value={updatedProduct.Price}
+          value={updatedProduct.price}
           onChange={handleChange}
           fullWidth
           required
@@ -73,7 +73,7 @@ const EditProductDialog = ({ open, handleClose, handleSave, product }) => {
           label="Weight"
           name="weight"
           type="number"
-          value={updatedProduct.Weight}
+          value={updatedProduct.weight}
           onChange={handleChange}
           fullWidth
           required

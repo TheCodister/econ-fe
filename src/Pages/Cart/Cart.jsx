@@ -19,7 +19,7 @@ const Cart = () => {
 
   const calculateTotal = () => {
     return state.cart.reduce((total, item) => {
-      return total + (item.Price * (1 - item.TotalDiscount)) * item.Quantity;
+      return total + (item.price * (1 - item.TotalDiscount)) * item.Quantity;
     }, 0);
   };
 
@@ -62,9 +62,9 @@ const Cart = () => {
   const handleBuyButtonClick = async () => {
     try {
       const purchaseTime = new Date(); // Get the current time
-      // Split the cart items based on StoreID
+      // Split the cart items based on storeID
       const itemsByStore = state.cart.reduce((result, item) => {
-        const storeID = item.StoreID;
+        const storeID = item.storeID;
         if (!result[storeID]) {
           result[storeID] = [];
         }
@@ -93,7 +93,7 @@ const Cart = () => {
           // total: calculateTotalForStore(items),
           DateAndTime: purchaseTime.toISOString(), // Convert to ISO string for consistency
           PaymentMethod: selectedPaymentMethod,
-          StoreID: newstoreID,
+          storeID: newstoreID,
           // Add other relevant information
         });
         
@@ -104,8 +104,8 @@ const Cart = () => {
             'Content-Type': 'application/json',
           },
           TransactionID: newBillId,
-          ProductID: item.ProductID,
-          StoreID: newstoreID,
+          ProductID: item.productID,
+          storeID: newstoreID,
           NumberOfProductInBill: item.Quantity, // Assuming quantity is the number of products in the bill
         });
 
@@ -145,7 +145,7 @@ const Cart = () => {
   // Helper function to calculate the total for a specific store
   const calculateTotalForStore = (items) => {
     return items.reduce((total, item) => {
-      return total + (item.Price * (1 - item.TotalDiscount)) * item.Quantity;
+      return total + (item.price * (1 - item.TotalDiscount)) * item.Quantity;
     }, 0);
   };
 
@@ -191,22 +191,22 @@ const Cart = () => {
                 <div key={index} className="cart-item">
                   <div className="item-details">
                     <Link 
-                      to={`/buy-product/${item.ProductID}/${item.StoreID}`} 
-                      key={item.ProductID}
+                      to={`/buy-product/${item.productID}/${item.storeID}`} 
+                      key={item.productID}
                       className="product-link"
                     >
-                      <p className="item-name">{item.PName}</p>
+                      <p className="item-name">{item.pName}</p>
                     </Link>
                     <p className="item-storeid">Store: {item.StoreName}</p>
                     {item.Promotion && item.Promotion.length > 0 ? (
                     <>
-                      <p className="promo-product-price">${item.Price.toFixed(2)}</p>
+                      <p className="promo-product-price">${item.price.toFixed(2)}</p>
                       <p className="cart_product__disscount_num">{item.TotalDiscount.toFixed(2) * 100}% off</p>
-                      <p className="promo-product-discount">Price: ${(item.Price * (1 - item.TotalDiscount)).toFixed(2)}</p>
+                      <p className="promo-product-discount">Price: ${(item.price * (1 - item.TotalDiscount)).toFixed(2)}</p>
                     </>
                   ) : (
                     <>
-                      <p className="item-price">Price: ${item.Price.toFixed(2)}</p>
+                      <p className="item-price">Price: ${item.price.toFixed(2)}</p>
                     </>
                   )}
                     {/* Add other details as needed */}

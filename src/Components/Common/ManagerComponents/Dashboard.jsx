@@ -62,7 +62,7 @@ const Dashboard = () => {
             <h2>Products</h2>
             {/* <div className="products__container_2">
                 {currentProducts.map((product) => (
-                    <ShowProduct key={product.ProductID} product={product} storeId={storeId} />
+                    <ShowProduct key={product.productID} product={product} storeId={storeId} />
                 ))}
             </div> */}
             <ProductList products={currentProducts} storeId={storeId} size="small" />

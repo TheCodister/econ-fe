@@ -4,12 +4,12 @@ import "./CreateProduct.scss";
 
 const CreateProduct = () => {
   const [productData, setProductData] = useState({
-    ProductID: "",
-    Category: "",
-    Description: "",
-    PName: "",
-    Price: "",
-    Weight: "",
+    productID: "",
+    category: "",
+    description: "",
+    pName: "",
+    price: "",
+    weight: "",
   });
   const [images, setImages] = useState([]);
 
@@ -38,7 +38,7 @@ const CreateProduct = () => {
           <input
             type="text"
             name="ProductID"
-            value={productData.ProductID}
+            value={productData.productID}
             onChange={handleInputChange}
             required
           />
@@ -47,7 +47,7 @@ const CreateProduct = () => {
           <input
             type="text"
             name="Category"
-            value={productData.Category}
+            value={productData.category}
             onChange={handleInputChange}
             required
           />
@@ -56,7 +56,7 @@ const CreateProduct = () => {
           <input
             type="text"
             name="PName"
-            value={productData.PName}
+            value={productData.pName}
             onChange={handleInputChange}
             required
           />
@@ -65,7 +65,7 @@ const CreateProduct = () => {
           <input
             type="number"
             name="Price"
-            value={productData.Price}
+            value={productData.price}
             onChange={handleInputChange}
             required
           />
@@ -74,7 +74,7 @@ const CreateProduct = () => {
           <input
             type="number"
             name="Weight"
-            value={productData.Weight}
+            value={productData.weight}
             onChange={handleInputChange}
             required
           />

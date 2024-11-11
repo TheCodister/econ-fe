@@ -29,7 +29,7 @@ const Store = () => {
         })
         .catch((error) => console.error(`Error fetching store ${storeId} data:`, error));
 
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/store/${storeId}`, {
+      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/stores/${storeId}`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -50,17 +50,17 @@ const Store = () => {
       <Header/>
       <div className="store-content">
       <header className="products__header container">
-        {store?.Name && 
+        {store?.name && 
           <h2 className="subtitle subtitle--products">
             <div className="store-logo">
-              <img src="/Images/prop_image/store-icon.svg" alt={`${store.Name} logo`} />
+              <img src="/Images/prop_image/store-icon.svg" alt={`${store.name} logo`} />
             </div>
-            {store.Name}
+            {store.name}
             </h2>}
         </header>
         {/* <div className="products__container container">
           {products.map((product) => (
-            <ShowProduct key={product.ProductID} product={product} storeId={storeId} />
+            <ShowProduct key={product.productID} product={product} storeId={storeId} />
           ))}
         </div> */}
         <p className="cart-item-count container reduce-mb">We found 

@@ -14,7 +14,7 @@ const ShowProduct = ({ product, storeId }) => {
     const fetchStoreInfo = async () => {
       if (!pageStoreId) {
         try {
-          const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/atstore/${product.ProductID}`, {
+          const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/atstore/${product.productID}`, {
             headers: {
               'Content-Type': 'application/json',
             },
@@ -23,23 +23,28 @@ const ShowProduct = ({ product, storeId }) => {
           
           // Choose the storeId with the highest NumberAtStore
           const selectedStoreInfo = storeInfoArray.reduce((prev, current) => (prev.NumberAtStore > current.NumberAtStore) ? prev : current);
-          const fetchedStoreId = selectedStoreInfo.StoreID;
+          const fetchedStoreId = selectedStoreInfo.storeID;
           
           // Use the fetched storeId or set a default value if needed
           setPageStoreId(fetchedStoreId);
         } catch (error) {
-          console.error(`Error fetching store info for product ${product.ProductID}:`, error);
+          console.error(`Error fetching store info for product ${product.productID}:`, error);
         }
       }
     };
   
     fetchStoreInfo();
-  }, [pageStoreId, product.ProductID]);
+  }, [pageStoreId, product.productID]);
   
   useEffect(() => {
     const fetchPromotionInfo = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/promotionfromproduct/${product.ProductID}`, {
+        if (product.discount) {
+          setPromotions([product.discount]);
+          setTotalDiscount(calculateTotalDiscount([product.discount]));
+          return;
+        }
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/promotionfromproduct/${product.productID}`, {
           headers: {
             'Content-Type': 'application/json',
           },
@@ -48,18 +53,18 @@ const ShowProduct = ({ product, storeId }) => {
         setPromotions(promotionInfo);
         setTotalDiscount(calculateTotalDiscount(promotionInfo));
       } catch (error) {
-        console.error(`Error fetching promotion info for product ${product.ProductID}:`, error);
+        console.error(`Error fetching promotion info for product ${product.productID}:`, error);
       }
     };
 
     fetchPromotionInfo();
-  }, [product.ProductID]);
+  }, [product.productID]);
 
   const calculateTotalDiscount = (promotions) => {
     if (!promotions || promotions.length === 0) {
       return 0; // No discounts
     }
-    const totalDiscount = promotions.reduce((total, promotion) => total + promotion.Discount, 0);
+    const totalDiscount = promotions.reduce((total, promotion) => total + promotion, 0);
     // Ensure the total discount does not exceed 0.99
     return Math.min(totalDiscount, 0.99);
   };
@@ -67,36 +72,36 @@ const ShowProduct = ({ product, storeId }) => {
   return (
     <div className="item-product">
       <Link 
-        to={`/buy-product/${product.ProductID}/${pageStoreId}`} 
-        key={product.ProductID}
+        to={`/buy-product/${product.productID}/${pageStoreId}`} 
+        key={product.productID}
         className="product-link"
       >
-      <article className="product-card" key={product.PName}>
+      <article className="product-card" key={product.pName}>
       {/* <div className='product-img-wrapper'>
         {product.Image ? (
-          <img src={`${product.Image}`} alt={product.PName} className="product-card__img" />
+          <img src={`${product.Image}`} alt={product.pName} className="product-card__img" />
         ) : (
-          <img src="/Images/no-image.jpg" alt={product.PName} className="product-card__img" />
+          <img src="/Images/no-image.jpg" alt={product.pName} className="product-card__img" />
         )}
       </div> */}
       <div className="product-card__body">
         <div className='product-img-wrapper'>
           {product.Image ? (
-            <img src={`${product.Image}`} alt={product.PName} className="product-card__img" />
+            <img src={`${product.Image}`} alt={product.pName} className="product-card__img" />
           ) : (
-            <img src="/Images/no-image.jpg" alt={product.PName} className="product-card__img" />
+            <img src="/Images/no-image.jpg" alt={product.pName} className="product-card__img" />
           )}
         </div>
-        <p className="product-card__name">{product.PName}</p>
+        <p className="product-card__name">{product.pName}</p>
         {promotions && promotions.length > 0 ? (
             <>
-                <p className="promo-product-price">${product.Price.toFixed(2)}</p>
+                <p className="promo-product-price">${product.price.toFixed(2)}</p>
                 <p className="product__disscount">-{totalDiscount.toFixed(2) * 100}%</p>
-                <p className="promo-product-discount">${(product.Price * (1 - totalDiscount)).toFixed(2)}</p>
+                <p className="promo-product-discount">${(product.price * (1 - totalDiscount)).toFixed(2)}</p>
             </>
         ) : (
             <>
-            <p className="product-card__price">${product.Price.toFixed(2)}</p>
+            <p className="product-card__price">${product.price.toFixed(2)}</p>
             </>
         )}
         <div className="product-card__buttons">

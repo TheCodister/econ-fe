@@ -40,7 +40,7 @@ const Home = () => {
     }, []);
 
     useEffect(() => {
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/store/`, {
+      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/stores/`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -69,7 +69,7 @@ const Home = () => {
         .then((data) => {
           console.log('Fetched Data:', data);
           const uniqueProducts = data.reduce((unique, product) => {
-            if (!unique.find((p) => p.ProductID === product.ProductID)) {
+            if (!unique.find((p) => p.productID === product.productID)) {
               return [...unique, product];
             }
             return unique;
@@ -80,7 +80,7 @@ const Home = () => {
     }, []);
 
     useEffect(() => {
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/top5products/2023`, {
+      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/top5products/2024`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -93,7 +93,7 @@ const Home = () => {
           console.log('Fetched Data:', data);
         // Fetch product information for each product in the top5products/2023 response
         const productPromises = data.map((product) =>
-          axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/${product.ProductID}`, {
+          axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/product/${product.productID}`, {
             headers: {
               'Content-Type': 'application/json',
             },
@@ -187,7 +187,7 @@ const Home = () => {
           {storesIsVisible && (
             <div className="stores-container">
               {stores.map((store) => (
-                <StoreCard store={store} key={store.StoreID} />
+                <StoreCard store={store} key={store.storeID} />
               ))}
             </div>
           )}

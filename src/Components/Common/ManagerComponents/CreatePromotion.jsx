@@ -55,7 +55,7 @@ const CreatePromotion = () => {
           <input
             type="text"
             name="Name"
-            value={promotionData.Name}
+            value={promotionData.name}
             onChange={handleInputChange}
             required
           />

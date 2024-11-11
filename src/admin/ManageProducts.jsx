@@ -65,7 +65,7 @@ const ManageProducts = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
 
   const handleEditProduct = (productId) => {
-    const product = products.find((p) => p.ProductID === productId);
+    const product = products.find((p) => p.productID === productId);
     setSelectedProduct(product);
     setOpenEditDialog(true);
   };
@@ -137,23 +137,23 @@ const ManageProducts = () => {
           </TableHead>
           <TableBody>
             {products.map((product) => (
-              <TableRow key={product.ProductID}>
-                <TableCell>{product.ProductID}</TableCell>
-                <TableCell>{product.PName}</TableCell>
-                <TableCell>{product.Category}</TableCell>
-                <TableCell align="right">${product.Price}</TableCell>
-                <TableCell align="right">{product.Weight}</TableCell>
+              <TableRow key={product.productID}>
+                <TableCell>{product.productID}</TableCell>
+                <TableCell>{product.pName}</TableCell>
+                <TableCell>{product.category}</TableCell>
+                <TableCell align="right">${product.price}</TableCell>
+                <TableCell align="right">{product.weight}</TableCell>
                 <TableCell>{product.imageURL}</TableCell>
                 <TableCell align="right">
                   <IconButton
                     color="primary"
-                    onClick={() => handleEditProduct(product.ProductID)}
+                    onClick={() => handleEditProduct(product.productID)}
                   >
                     <EditIcon />
                   </IconButton>
                   <IconButton
                     color="error"
-                    onClick={() => handleDeleteProduct(product.ProductID)}
+                    onClick={() => handleDeleteProduct(product.productID)}
                   >
                     <DeleteIcon />
                   </IconButton>

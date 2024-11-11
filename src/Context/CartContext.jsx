@@ -17,7 +17,7 @@ const cartReducer = (state, action) => {
       };
     case 'UPDATE_CART_ITEM':
       const updatedCart = state.cart.map((item) =>
-        item.ProductID === action.payload.ProductID && item.StoreID === action.payload.StoreID
+        item.productID === action.payload.productID && item.storeID === action.payload.storeID
           ? { ...item, Quantity: action.payload.Quantity }
           : item
       );
