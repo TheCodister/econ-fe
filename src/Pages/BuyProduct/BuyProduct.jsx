@@ -29,13 +29,13 @@ const BuyProduct = () => {
 
   useEffect(() => {
     // Fetch product details based on the productId
-    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/${productId}`, {
+    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/product/${productId}`, {
       headers: {
         'Content-Type': 'application/json',
       },
     })
       .then((response) => {
-        console.log('Fetched Data:', response.data);
+        console.log('Fetched Product Data:', response.data);
         return response.data;
       })
       .then((data) => {
@@ -45,7 +45,7 @@ const BuyProduct = () => {
       .catch((error) => console.error(`Error fetching product ${productId} data:`, error));
 
       // Fetch additional information: number at store based on the productId
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/productatstore/${productId}/${storeId}`, {
+      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/atstore/${productId}`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -56,7 +56,10 @@ const BuyProduct = () => {
         })
         .then((data) => {
           console.log('Fetched Data:', data);
-          setproductAtStore(data);
+          // Choose the storeId with the same storeId
+          const selectedStoreInfo = data.find((storeInfo) => storeInfo.storeID === (storeId));
+          console.log('Selected Store Info:', selectedStoreInfo);
+          setproductAtStore(selectedStoreInfo);
         })
         .catch((error) => console.error(`Error fetching product ${productId} data:`, error));
   }, [productId]);
@@ -82,7 +85,7 @@ const BuyProduct = () => {
   }, [productId]);
 
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/store/${storeId}`, {
+    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/stores/${storeId}`, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -123,7 +126,7 @@ const BuyProduct = () => {
 
   const handleQuantityChange = (e) => {
     const newQuantity = parseInt(e.target.value);
-    const maxQuantity = productAtStore ? productAtStore.NumberAtStore : 1;
+    const maxQuantity = productAtStore ? productAtStore.numberAtStore : 1;
     setQuantity(newQuantity > 0 ? Math.min(newQuantity, maxQuantity) : 1);
   };
 
@@ -164,7 +167,7 @@ const BuyProduct = () => {
       const newQuantity = existingCartItem.Quantity + quantity;
   
       // Check if the new quantity exceeds the available stock
-      if (newQuantity > productAtStore.NumberAtStore) {
+      if (newQuantity > productAtStore.numberAtStore) {
         console.error("Error: Quantity exceeds available stock.");
         return; // Prevent adding to cart if quantity exceeds stock
       }
@@ -269,7 +272,7 @@ const BuyProduct = () => {
                   )}
                   <div className='product-at-store'>
                     <p>Stock: </p>
-                    <p className='aeon_pink'> {productAtStore.NumberAtStore} Items In Stock</p>
+                    <p className='aeon_pink'> {productAtStore.numberAtStore} Items In Stock</p>
                   </div>
                 </div>
 

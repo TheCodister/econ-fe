@@ -22,7 +22,7 @@ const ShowProduct = ({ product, storeId }) => {
           const storeInfoArray = response.data;
           
           // Choose the storeId with the highest NumberAtStore
-          const selectedStoreInfo = storeInfoArray.reduce((prev, current) => (prev.NumberAtStore > current.NumberAtStore) ? prev : current);
+          const selectedStoreInfo = storeInfoArray.reduce((prev, current) => (prev.numberAtStore > current.numberAtStore) ? prev : current);
           const fetchedStoreId = selectedStoreInfo.storeID;
           
           // Use the fetched storeId or set a default value if needed
