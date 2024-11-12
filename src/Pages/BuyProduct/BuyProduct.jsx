@@ -1,3 +1,4 @@
+// src/Pages/BuyProduct/BuyProduct.jsx
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Header, Footer } from "../../Components";
@@ -6,17 +7,19 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from "axios";
 import "./BuyProduct.scss";
+import { useAuth } from '../../hooks/useAuth'; // Import useAuth
 
 const BuyProduct = () => {
   const { productId, storeId } = useParams();
   const [product, setProduct] = useState(null);
-  const [productAtStore, setproductAtStore] = useState(null);
+  const [productAtStore, setProductAtStore] = useState(null);
   const [quantity, setQuantity] = useState(1); // Default quantity is 1
   const [promotions, setPromotions] = useState([]);
   const [totalDiscount, setTotalDiscount] = useState(0);
-  const [ store, setStore ] = useState();
+  const [store, setStore] = useState();
   const { state, dispatch } = useCart();
   const [buttonClass, setButtonClass] = useState('');
+  const { user } = useAuth(); // Get user from context
 
   const defaultImages = [
     '/Images/no-image.jpg',
@@ -25,7 +28,7 @@ const BuyProduct = () => {
     '/Images/no-image.jpg'
   ];
 
-  const [selectedImage, setSelectedImage] = useState(defaultImages[0]); 
+  const [selectedImage, setSelectedImage] = useState(defaultImages[0]);
 
   useEffect(() => {
     // Fetch product details based on the productId
@@ -35,85 +38,65 @@ const BuyProduct = () => {
       },
     })
       .then((response) => {
-        console.log('Fetched Product Data:', response.data);
-        return response.data;
-      })
-      .then((data) => {
-        console.log('Fetched Data:', data);
-        setProduct(data);
+        console.log('Product Data:', response.data);
+        setProduct(response.data);
       })
       .catch((error) => console.error(`Error fetching product ${productId} data:`, error));
 
-      // Fetch additional information: number at store based on the productId
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/atstore/${productId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+    // Fetch product availability at store
+    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/atstore/${productId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        // Choose the storeId with the same storeId
+        const selectedStoreInfo = response.data.find((storeInfo) => storeInfo.storeID === storeId);
+        setProductAtStore(selectedStoreInfo);
       })
-        .then((response) => {
-          console.log('Fetched Data:', response.data);
-          return response.data;
-        })
-        .then((data) => {
-          console.log('Fetched Data:', data);
-          // Choose the storeId with the same storeId
-          const selectedStoreInfo = data.find((storeInfo) => storeInfo.storeID === (storeId));
-          console.log('Selected Store Info:', selectedStoreInfo);
-          setproductAtStore(selectedStoreInfo);
-        })
-        .catch((error) => console.error(`Error fetching product ${productId} data:`, error));
-  }, [productId]);
+      .catch((error) => console.error(`Error fetching product availability for ${productId}:`, error));
+  }, [productId, storeId]);
 
-  // Fetch additional information: promotion based on the productId
+  // Fetch promotion information
   useEffect(() => {
     const fetchPromotionInfo = async () => {
+      if (!product) {
+        return;
+      }
+      if (product && product.discount && product.discount > 0) {
+        // If the product has a discount, set the total discount to the discount amount
+        console.log('Product has a discount:', product.discount);
+        setTotalDiscount(product.discount);
+        return;
+      }
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/promotionfromproduct/${productId}`, {
+        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/product/${productId}`, {
           headers: {
             'Content-Type': 'application/json',
           },
         });
-        const promotionInfo = response.data;
-        setPromotions(promotionInfo);
-        setTotalDiscount(calculateTotalDiscount(promotionInfo));
+        console.log('Promotion Data:', response.data);
+        setPromotions(response.data);
+        setTotalDiscount(calculateTotalDiscount(response.data));
       } catch (error) {
-        console.error(`Error fetching promotion info for product ${product.productID}:`, error);
+        console.error(`Error fetching promotion info for product ${productId}:`, error);
       }
     };
 
     fetchPromotionInfo();
-  }, [productId]);
+  }, [product]);
 
   useEffect(() => {
     axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/stores/${storeId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    })
+      .then((response) => {
+        setStore(response.data);
       })
-        .then((response) => {
-          console.log('Fetched Data:', response.data);
-          return response.data;
-        })
-        .then((data) => {
-          console.log('Fetched Data:', data);
-          setStore(data);
-        })
-        .catch((error) => console.error(`Error fetching store ${storeId} data:`, error));
-    }, [storeId]);
-
-  function getCookie(cookieName) {
-    const name = cookieName + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const cookieArray = decodedCookie.split(';');
-  
-    for (let i = 0; i < cookieArray.length; i++) {
-      let cookie = cookieArray[i].trim();
-      if (cookie.indexOf(name) === 0) {
-        return cookie.substring(name.length, cookie.length);
-      }
-    }
-    return null;
-  };    
+      .catch((error) => console.error(`Error fetching store ${storeId} data:`, error));
+  }, [storeId]);
 
   const calculateTotalDiscount = (promotions) => {
     if (!promotions || promotions.length === 0) {
@@ -131,24 +114,18 @@ const BuyProduct = () => {
   };
 
   const handleAddToCart = () => {
-    // Handle button class changes
-    if (!getCookie('userID')) {
-      console.error("Error: User is not logged in.");
-
+    // Check if user is authenticated and is a customer
+    if (!user || user.role !== 'Customer') {
       toast.error('Log in to add items to your cart!', {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
         theme: "colored",
       });
-
-      return; // Prevent adding to cart if user is not logged in
+      return; // Prevent adding to cart if user is not a customer
     }
-
+  
+    // Handle button class changes
     setButtonClass('onclic');
     setTimeout(() => {
       setButtonClass('validate');
@@ -156,7 +133,7 @@ const BuyProduct = () => {
         setButtonClass('');
       }, 1250);
     }, 2250);
-
+  
     // Check if the product already exists in the cart
     const existingCartItem = state.cart.find(
       (item) => item.productID === product.productID && item.storeID === productAtStore.storeID
@@ -164,61 +141,56 @@ const BuyProduct = () => {
   
     if (existingCartItem) {
       // If the product exists, calculate the new quantity
-      const newQuantity = existingCartItem.Quantity + quantity;
+      const newQuantity = existingCartItem.quantity + quantity;
   
       // Check if the new quantity exceeds the available stock
       if (newQuantity > productAtStore.numberAtStore) {
-        console.error("Error: Quantity exceeds available stock.");
+        toast.error('Quantity exceeds available stock.', {
+          position: "bottom-left",
+          autoClose: 5000,
+          hideProgressBar: false,
+          theme: "colored",
+        });
         return; // Prevent adding to cart if quantity exceeds stock
       }
   
       // Update the quantity of the existing item in the cart
-      dispatch({ type: 'UPDATE_CART_ITEM', payload: { ...existingCartItem, Quantity: newQuantity } });
-      console.log(`Updated quantity of ${product.pName} in the cart: ${newQuantity}`);
+      dispatch({ type: 'UPDATE_CART_ITEM', payload: { ...existingCartItem, quantity: newQuantity } });
       setQuantity(1); // Reset the quantity to 1 after adding to cart
-
+  
       toast.success(`Updated quantity of ${product.pName} successfully!`, {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
         theme: "colored",
       });
-
+  
     } else {
       // If the product does not exist, add it to the cart
       const purchaseInfo = {
-        ProductID: product.productID,
-        PName: product.pName,
-        Quantity: quantity,
-        Price: product.price,
+        productID: product.productID,
+        pName: product.pName,
+        quantity: quantity,
+        price: product.price,
         storeID: productAtStore.storeID,
-        StoreName: store.name,
-        Promotion: promotions,
-        TotalDiscount: totalDiscount
+        storeName: store.name,
+        promotion: promotions,
+        totalDiscount: totalDiscount
         // Add other relevant info
       };
   
       // Add the new item to the cart
       dispatch({ type: 'ADD_TO_CART', payload: purchaseInfo });
-      console.log(`Added ${quantity} ${product.pName} to the cart.`);
       setQuantity(1); // Reset the quantity to 1 after adding to cart
-
+  
       toast.success(`Added ${quantity} ${product.pName} to the cart.`, {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
         theme: "colored",
       });
     }
-  };  
+  };
 
   return (
     <div className="buy-product">
@@ -250,14 +222,10 @@ const BuyProduct = () => {
               <h2 className="product-name">{product.pName}</h2>
               <div className='info'>
                 <div className="product-info">
-                  <div className="">
-                    {/* Use Link to navigate to the Store page with productId */}
-                    <Link className='product-category' to={`/Store/${productAtStore.storeID}`}>
-                      {store?.name && <p>{store.name}</p>}
-                    </Link>
-                  {/* Add more details as needed */}
-                  </div>
-                  {/* <p>Category: {product.category}</p> */}
+                  {/* Use Link to navigate to the Store page with storeId */}
+                  <Link className='product-category' to={`/Store/${productAtStore.storeID}`}>
+                    {store?.name && <p>{store.name}</p>}
+                  </Link>
                   <p className="product-description">{product.Description}</p>
                   {promotions && promotions.length > 0 ? (
                     <>
@@ -275,17 +243,9 @@ const BuyProduct = () => {
                     <p className='aeon_pink'> {productAtStore.numberAtStore} Items In Stock</p>
                   </div>
                 </div>
-
-                {/* Add more details as needed */}
-                {/* Additional Information */}
-                {/* <div className="provider">
-                  <Link to={`/Store/${productAtStore.storeID}`}>
-                    {store?.name && <p>Store: {store.name}</p>}
-                  </Link>
-                </div> */}
               </div>
               {/* Quantity Input */}
-              <div className=''>
+              <div className='quantity-section'>
                 <div className="quantity-input">
                   <label htmlFor="quantity"></label>
                   <input
