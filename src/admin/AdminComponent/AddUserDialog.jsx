@@ -15,10 +15,15 @@ import {
 
 const AddUserDialog = ({ open, handleClose, handleSave }) => {
   const [user, setUser] = useState({
-    userName: '',
+    fName: '',
+    lName: '',
+    address: '',
     email: '',
+    phoneNumber: '',
     password: '',
     role: '',
+    salary: '',
+    storeID: '',
   });
 
   const handleChange = (e) => {
@@ -26,7 +31,6 @@ const AddUserDialog = ({ open, handleClose, handleSave }) => {
   };
 
   const onSave = () => {
-    // Validate user data
     handleSave(user);
     handleClose();
   };
@@ -37,9 +41,27 @@ const AddUserDialog = ({ open, handleClose, handleSave }) => {
       <DialogContent>
         <TextField
           margin="dense"
-          label="Username"
-          name="userName"
-          value={user.userName}
+          label="First Name"
+          name="fName"
+          value={user.fName}
+          onChange={handleChange}
+          fullWidth
+          required
+        />
+        <TextField
+          margin="dense"
+          label="Last Name"
+          name="lName"
+          value={user.lName}
+          onChange={handleChange}
+          fullWidth
+          required
+        />
+        <TextField
+          margin="dense"
+          label="Address"
+          name="address"
+          value={user.address}
           onChange={handleChange}
           fullWidth
           required
@@ -49,6 +71,15 @@ const AddUserDialog = ({ open, handleClose, handleSave }) => {
           label="Email"
           name="email"
           value={user.email}
+          onChange={handleChange}
+          fullWidth
+          required
+        />
+        <TextField
+          margin="dense"
+          label="Phone Number"
+          name="phoneNumber"
+          value={user.phoneNumber}
           onChange={handleChange}
           fullWidth
           required
@@ -76,6 +107,29 @@ const AddUserDialog = ({ open, handleClose, handleSave }) => {
             <MenuItem value="StoreManager">Store Manager</MenuItem>
           </Select>
         </FormControl>
+        {user.role === 'StoreManager' && (
+          <>
+            <TextField
+              margin="dense"
+              label="Salary"
+              name="salary"
+              type="number"
+              value={user.salary}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+            <TextField
+              margin="dense"
+              label="Store ID"
+              name="storeID"
+              value={user.storeID}
+              onChange={handleChange}
+              fullWidth
+              required
+            />
+          </>
+        )}
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
