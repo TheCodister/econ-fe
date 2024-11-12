@@ -53,6 +53,7 @@ const Profile = () => {
   // Snackbar state
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState('success');
 
   useEffect(() => {
     if (!user) {
@@ -98,6 +99,17 @@ const Profile = () => {
         description: promo.description,
         product: promo.product,
       }));
+
+      // Add the "Better Luck Next Time" option
+      promotions.push({
+        promotionId: null,
+        option: "Better Luck Next Time",
+        discount: 0,
+        name: "Better Luck Next Time",
+        description: "",
+        product: null,
+      });
+
       setWheelData(promotions);
     } catch (error) {
       console.error("Error fetching wheel data:", error);
@@ -129,26 +141,38 @@ const Profile = () => {
     setMustSpin(false);
     setFortuneChances(fortuneChances - 1);
 
-    // Display the result using Material-UI Snackbar
-    setSnackbarMessage(`Congratulations! You won ${winner.option}!`);
-    setOpenSnackbar(true);
+    if (winner.promotionId) {
+      // User won a promotion
+      setSnackbarMessage(`🎉 Congratulations! You won ${winner.option}!`);
+      setSnackbarSeverity('success');
+      setOpenSnackbar(true);
 
-    // Post the customer promotion to the API
-    try {
-      await axios.post(
-        `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/customer/${winner.promotionId}/${user.id}`,
-        {},
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
-      console.log("Promotion applied successfully");
-    } catch (error) {
-      console.error("Error applying promotion:", error);
+      // Post the customer promotion to the API
+      try {
+        await axios.post(
+          `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/customer/${winner.promotionId}/${user.id}`,
+          {},
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+            withCredentials: true,
+          }
+        );
+        console.log("Promotion applied successfully");
+      } catch (error) {
+        console.error("Error applying promotion:", error);
+        setSnackbarMessage("❌ Failed to apply promotion. Please try again.");
+        setSnackbarSeverity('error');
+        setOpenSnackbar(true);
+      }
+    } else {
+      // User landed on "Better Luck Next Time"
+      setSnackbarMessage("😞 Better luck next time!");
+      setSnackbarSeverity('info');
+      setOpenSnackbar(true);
     }
+
   };
 
   // Adjust the badge position
@@ -167,7 +191,7 @@ const Profile = () => {
   return (
     <div className="profile">
       <Header />
-      <div className="profile-content" >
+      <div className="profile-content">
         {showUser && (
           <div className="profile-content-wrapper">
             <UserMenu username={`${user.fName} ${user.lName}`} onMenuClick={handleMenuClick} mode="Customer" />
@@ -193,7 +217,7 @@ const Profile = () => {
         )}
         {!showUser && !showManager && (
           <div>
-            <h2> Please log in to view your profile</h2>
+            <h2>Please log in to view your profile</h2>
           </div>
         )}
 
@@ -336,7 +360,7 @@ const Profile = () => {
           onClose={() => setOpenSnackbar(false)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         >
-          <Alert onClose={() => setOpenSnackbar(false)} severity="success" sx={{ width: '100%' }}>
+          <Alert onClose={() => setOpenSnackbar(false)} severity={snackbarSeverity} sx={{ width: '100%' }}>
             {snackbarMessage}
           </Alert>
         </Snackbar>

@@ -15,8 +15,6 @@ const Cart = () => {
   const { user } = useAuth(); // Get user from context
   const navigate = useNavigate(); // For navigation after purchase
 
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Credit Card');
-  const [isProcessing, setIsProcessing] = useState(false); // To manage button state
 
   const handleRemoveItem = (index) => {
     dispatch({ type: 'REMOVE_FROM_CART', payload: index });
@@ -28,100 +26,6 @@ const Cart = () => {
     }, 0);
   };
 
-  const handlePaymentMethodChange = (event) => {
-    setSelectedPaymentMethod(event.target.value);
-  };
-
-  const handleBuyButtonClick = async () => {
-    if (isProcessing) return; // Prevent multiple submissions
-    setIsProcessing(true);
-
-    try {
-      if (!user) {
-        toast.error('You must be logged in to make a purchase.', {
-          position: "bottom-left",
-          autoClose: 5000,
-          hideProgressBar: false,
-          theme: "colored",
-        });
-        setIsProcessing(false);
-        return;
-      }
-
-      // Split the cart items based on storeID
-      const itemsByStore = state.cart.reduce((result, item) => {
-        const storeID = item.storeID;
-        if (!result[storeID]) {
-          result[storeID] = [];
-        }
-        result[storeID].push(item);
-        return result;
-      }, {});
-
-      const purchaseTime = new Date().toISOString(); // Current time in ISO format
-
-      // Prepare transactions for each store
-      const transactionPromises = Object.entries(itemsByStore).map(async ([storeID, items]) => {
-        // Calculate totalPrice and totalWeight for this store
-        const totalPrice = items.reduce((sum, item) => sum + item.discountedPrice * item.quantity, 0);
-        const totalWeight = items.reduce((sum, item) => sum + (item.weight * item.quantity), 0); // Assuming each item has a 'weight' property
-
-        // Prepare the includes array
-        const includes = items.map(item => ({
-          productID: item.productID,
-          numberOfProductInBill: item.quantity,
-          subTotal: item.discountedPrice * item.quantity,
-        }));
-
-        // Create the transaction object
-        const transactionData = {
-          paymentMethod: selectedPaymentMethod,
-          dateAndTime: purchaseTime,
-          customerID: user.id, // Assuming user object has 'id' property
-          storeID: storeID,
-          includes: includes,
-          totalPrice: parseFloat(totalPrice.toFixed(2)),
-          totalWeight: totalWeight,
-        };
-
-        // POST /transactions
-        const response = await axios.post(`${import.meta.env.VITE_REACT_APP_API_URL}/transactions`, transactionData, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        });
-
-        return response.data;
-      });
-
-      // Execute all transactions concurrently
-      await Promise.all(transactionPromises);
-
-      // Clear the cart after successful transactions
-      dispatch({ type: 'CLEAR_CART' });
-
-      toast.success('Purchase successful! Thank you for your order.', {
-        position: "bottom-left",
-        autoClose: 5000,
-        hideProgressBar: false,
-        theme: "colored",
-      });
-
-      // Redirect to order confirmation page or orders page
-      // navigate('/orders');
-    } catch (error) {
-      console.error('Error while processing the purchase:', error);
-      toast.error('There was an error processing your purchase. Please try again.', {
-        position: "bottom-left",
-        autoClose: 5000,
-        hideProgressBar: false,
-        theme: "colored",
-      });
-    } finally {
-      setIsProcessing(false);
-    }
-  };
 
   const clearCart = () => {
     dispatch({ type: 'CLEAR_CART' });
@@ -133,12 +37,6 @@ const Cart = () => {
     });
   };
 
-  // Helper function to calculate the total for a specific store
-  const calculateTotalForStore = (items) => {
-    return items.reduce((total, item) => {
-      return total + (item.price * (1 - item.totalDiscount)) * item.quantity;
-    }, 0);
-  };
 
   const subtotal = Number(calculateTotal());
   const shipping = subtotal > 50 ? 0 : 0; // Example: Free shipping over $50
