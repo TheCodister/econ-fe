@@ -1,104 +1,89 @@
-import React, { useState } from "react";
-import axios from "axios";
+// src/Components/Common/UserComponents/MyAccount.jsx
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { useAuth } from '../../../hooks/useAuth';
+import { Card, CardContent, Typography, Box } from '@mui/material';
 
 const MyAccount = () => {
-    const [CFName, setCFName] = useState("");
-    const [CLName, setCLName] = useState("");
-    const [CAddress, setCAddress] = useState("");
-    const [CPhone, setCPhone] = useState("");
-    const [rank, setrank] = useState("");
+  const { user } = useAuth(); // Access user from useAuth
+  const [rank, setRank] = useState('');
 
-    function getCookie(cookieName) {
-        const name = cookieName + "=";
-        const decodedCookie = decodeURIComponent(document.cookie);
-        const cookieArray = decodedCookie.split(';');
-      
-        for (let i = 0; i < cookieArray.length; i++) {
-          let cookie = cookieArray[i].trim();
-          if (cookie.indexOf(name) === 0) {
-            return cookie.substring(name.length, cookie.length);
-          }
-        }
-        return null;
-      }
-
-      const getRankIcon = () => {
-        switch (rank) {
-          case 'iron':
-            return < img src= "Images/user-ranks/bronze.png" alt="Iron Icon" style={{ width: "75px", height: "auto" }}/>;
-          case 'bronze':
-            return < img src= "Images/user-ranks/iron.png" alt="Bronze Icon" style={{ width: "75px", height: "auto" }}/>;
-          case 'silver':
-            return < img src= "Images/user-ranks/silver.png" alt="Silver Icon" style={{ width: "75px", height: "auto" }}/>;
-          case 'gold':
-            return < img src= "Images/user-ranks/gold.png" alt="Gold Icon" style={{ width: "75px", height: "auto" }}/>;
-            case 'platinum':
-              return < img src= "Images/user-ranks/plat.png" alt="Platinum Icon" style={{ width: "75px", height: "auto" }}/>;
-          default:
-            return null; // You can customize this based on your actual rank values
-        }
-      };
-
-    const submitloginForm = async () => {
-
-        axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/${getCookie('userID')}`, {
-        headers: {
-            "Content-Type": "application/json",
-        },
-        })
-          .then((response) => {
-            console.log('Fetched Cookie:', response.data);
-            return response.data;
-          })
-          .then((data) => {
-              console.log('Fetched Cookie:', data);
-              setCFName(data.CFName);
-              setCLName(data.CLName);
-              setCAddress(data.CAddress);
-              setCPhone(data.CPhone);
-          })
-          .catch((error) => console.error(`Error fetching ${cookie} data:`, error));
-  
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/customer-rank/${getCookie('userID')}`,{
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        console.log('Fetched Data:', response.data)
-        return response.data
-      })
-      .then((data) => {
-        console.log('Fetched Data:', data.rank);
-        setrank(data.rank);
-      })
-        .catch((error) => console.error("Error fetching data:", error));
+  useEffect(() => {
+    if (user && user.id) {
+      fetchRank(user.id);
     }
+  }, [user]);
 
-    useState(() => {
-        if (getCookie("userID")) {
-          submitloginForm();
+  const fetchRank = async (userId) => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/customers/customer-rank/${userId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
         }
-      }, []);
+      );
+      setRank(response.data.rank);
+    } catch (error) {
+      console.error('Error fetching rank:', error);
+    }
+  };
 
-    return (
-      <div>
-        <h1>My Account</h1>
-        <form className="customer_profile_form">
-            {/* <UserMenu /> */}
-            <div>Hello user {CFName} {CLName}</div>
-            <div>Your number {CPhone}</div>
-            <div>Your address {CAddress}</div>
-            {rank !== "" ? (
-              <div>
-                Your current rank: {rank} {getRankIcon()}
-              </div>
-            ) : (
-              <p>No rank available</p>
-            )}
-        </form>
-      </div>
-    );
-}
+  const getRankIcon = () => {
+    switch (rank) {
+      case 'iron':
+        return <img src="/Images/user-ranks/bronze.png" alt="Iron Icon" style={{ width: 75 }} />;
+      case 'bronze':
+        return <img src="/Images/user-ranks/iron.png" alt="Bronze Icon" style={{ width: 75 }} />;
+      case 'silver':
+        return <img src="/Images/user-ranks/silver.png" alt="Silver Icon" style={{ width: 75 }} />;
+      case 'gold':
+        return <img src="/Images/user-ranks/gold.png" alt="Gold Icon" style={{ width: 75 }} />;
+      case 'platinum':
+        return <img src="/Images/user-ranks/plat.png" alt="Platinum Icon" style={{ width: 75 }} />;
+      default:
+        return null;
+    }
+  };
+
+  if (!user) {
+    return <Typography variant="h5">Loading...</Typography>;
+  }
+
+  return (
+    <Box sx={{ maxWidth: 600, margin: '0 auto', mt: 4 }}>
+      <Card>
+        <CardContent>
+          <Typography variant="h4" gutterBottom>
+            My Account
+          </Typography>
+          <Typography variant="h6">
+            Hello {user.fName} {user.lName}
+          </Typography>
+          <Typography variant="body1" sx={{ mt: 2 }}>
+            <strong>Phone Number:</strong> {user.phoneNumber}
+          </Typography>
+          <Typography variant="body1">
+            <strong>Address:</strong> {user.address}
+          </Typography>
+          {rank ? (
+            <Box display="flex" alignItems="center" mt={2}>
+              <Typography variant="body1" sx={{ mr: 1 }}>
+                <strong>Your current rank:</strong> {rank}
+              </Typography>
+              {getRankIcon()}
+            </Box>
+          ) : (
+            <Typography variant="body1" mt={2}>
+              No rank available
+            </Typography>
+          )}
+        </CardContent>
+      </Card>
+    </Box>
+  );
+};
 
 export default MyAccount;

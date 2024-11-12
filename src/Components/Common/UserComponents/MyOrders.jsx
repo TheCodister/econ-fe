@@ -1,92 +1,110 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import "./MyOrders.scss"; // Ensure you have a corresponding SCSS file
+import { useAuth } from "../../../hooks/useAuth";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Typography,
+  Link,
+} from "@mui/material";
 
 const MyOrders = () => {
-  const [transaction, setTransaction] = useState([]);
-
-  function getCookie(cookieName) {
-    const name = cookieName + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const cookieArray = decodedCookie.split(';');
-
-    for (let i = 0; i < cookieArray.length; i++) {
-      let cookie = cookieArray[i].trim();
-      if (cookie.indexOf(name) === 0) {
-        return cookie.substring(name.length, cookie.length);
-      }
-    }
-    return null;
-  }
+  const { user } = useAuth(); // Access user from useAuth
+  const [transactions, setTransactions] = useState([]);
 
   const fetchTransactions = async () => {
     try {
+      // For display purposes, we're fetching all transactions without customerID
       const response = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_API_URL}/customers/shipping/${getCookie('userID')}`,
+        `${import.meta.env.VITE_REACT_APP_API_URL}/transactions`,
         {
-          headers: { 'Content-Type': 'application/json' },
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
         }
       );
-      console.log('Fetched Data:', response.data);
-      setTransaction(response.data.data || []);
+      let fetchedTransactions = response.data || [];
+
+      // Sort transactions from newest to oldest based on dateAndTime
+      fetchedTransactions.sort((a, b) => {
+        return new Date(b.dateAndTime) - new Date(a.dateAndTime);
+      });
+
+      setTransactions(fetchedTransactions);
     } catch (error) {
-      console.error(`Error fetching ${getCookie('userID')} data:`, error);
+      console.error("Error fetching transactions:", error);
     }
   };
 
+  const deliveryStatusMap = {
+    0: "Pending",
+    1: "Prepared",
+    2: "Accepted",
+    3: "On Delivery",
+    4: "Delivered",
+  };
+
   useEffect(() => {
-    if (getCookie("userID")) {
+    if (user) {
       fetchTransactions();
     }
-  }, []);
+  }, [user]);
 
   return (
     <div className="my-orders">
-      <h2>Your Orders</h2>
-      {transaction && transaction.length > 0 ? (
-        <table className="orders-table">
-          <thead>
-            <tr>
-              <th>Order</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Total</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {transaction.map((order) => (
-              <tr key={order.transactionID}>
-                <td>#{order.TransactionID}</td>
-                {/* <td>{new Date(order.Date).toLocaleDateString()}</td> */}
-                {order.Date ? (
-                  <td>{new Date(order.Date).toLocaleDateString()}</td>
-                ) : (
-                  <td>
-                    {/* default date 29/02/2024 */}
-                    29/02/2024
-                  </td>
-                )
-                }
-                {order.Status ? (
-                  <td className="status">{order.Status}</td>
-                ) : (
-                  <td className="status">Unknown</td>
-                )
-                }
-                {order.Total ? (
-                  <td>${order.Total}</td>
-                ) : (
-                  <td>$0.00</td>
-                )
-                }
-                <td><a href={`/orders/${order.TransactionID}`} className="view-link">View</a></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <Typography variant="h4" gutterBottom>
+        Your Orders
+      </Typography>
+      {transactions && transactions.length > 0 ? (
+        <TableContainer component={Paper}>
+          <Table aria-label="orders table">
+            <TableHead>
+              <TableRow>
+                <TableCell>
+                  <strong>Order ID</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Date</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Status</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Total</strong>
+                </TableCell>
+                <TableCell>
+                  <strong>Actions</strong>
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {transactions.map((order) => (
+                <TableRow key={order.transactionId}>
+                  <TableCell>#{order.transactionId}</TableCell>
+                  <TableCell>
+                    {new Date(order.dateAndTime).toLocaleDateString()}
+                  </TableCell>
+                  <TableCell>
+                    {deliveryStatusMap[order.deliveryStatus] || "Unknown"}
+                  </TableCell>
+                  <TableCell>${order.totalPrice.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Link href={`/orders/${order.transactionId}`} underline="none">
+                      View
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
       ) : (
-        <p>No transactions available</p>
+        <Typography>No transactions available</Typography>
       )}
     </div>
   );

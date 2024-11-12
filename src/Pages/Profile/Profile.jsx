@@ -1,3 +1,4 @@
+// src/Pages/Profile/Profile.jsx
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Header, Footer, UserMenu } from "../../Components";
@@ -11,13 +12,12 @@ import CreatePromotion from "../../Components/Common/ManagerComponents/CreatePro
 import Dashboard from "../../Components/Common/ManagerComponents/Dashboard";
 import StoreOrders from "../../Components/Common/ManagerComponents/StoreOrders";
 import AccountDetails from "../../Components/Common/UserComponents/AccountDetail";
-import axios, { AxiosError } from "axios";
-
+import axios from "axios";
 import { Modal, IconButton, Box, Typography, Button, Badge } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { keyframes, padding } from '@mui/system';
+import { keyframes } from '@mui/system';
 import CasinoIcon from '@mui/icons-material/Casino'; // Icon for the floating button
 import { Wheel } from 'react-custom-roulette';
+import { useAuth } from "../../hooks/useAuth";
 
 // Define the pulse animation
 const pulse = keyframes`
@@ -35,205 +35,102 @@ const pulse = keyframes`
   }
 `;
 
-
 const Profile = () => {
-  // Variables for customer information
-
   const navigate = useNavigate();
+  const { user } = useAuth(); // Get user from context
 
   const [CFName, setCFName] = useState("");
   const [CLName, setCLName] = useState("");
   const [CAddress, setCAddress] = useState("");
   const [CPhone, setCPhone] = useState("");
-  const [rank, setrank] = useState("");
-  const [transaction, settransaction] = useState([]);
-  const [promotion, setpromotion] = useState([]);
+  const [rank, setRank] = useState("");
+  const [transaction, setTransaction] = useState([]);
+  const [promotion, setPromotion] = useState([]);
 
-  const [showmanager, setShowmanager] = useState(false);
-  const [showuser, setShowuser] = useState(false);
+  // State to determine which components to show
+  const [showManager, setShowManager] = useState(false);
+  const [showUser, setShowUser] = useState(false);
 
-  //Cookie
-  const [cookie, setcookie] = useState(false);
-
-
-  const [formData, setformData]= useState({
-    CFName:'',
-    CLName:'',
-    CAddress:'',
-    CPhone:'',
-    CustomerID: 0,
-  })
-  /* make cookie when need to get customer id*/
-  const setCookie = (name, value, days) => {
-    const expirationDate = new Date();
-    expirationDate.setDate(expirationDate.getDate() + days);
-    const cookieValue = `${name}=${value}; expires=${expirationDate.toUTCString()}; path=/`;
-    document.cookie = cookieValue;
-  };
-  /*Take cookie*/
-  function getCookie(cookieName) {
-    const name = cookieName + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const cookieArray = decodedCookie.split(';');
-  
-    for (let i = 0; i < cookieArray.length; i++) {
-      let cookie = cookieArray[i].trim();
-      if (cookie.indexOf(name) === 0) {
-        return cookie.substring(name.length, cookie.length);
-      }
-    }
-    return null;
-  }
-
-//   delete cookie 
-    function deleteCookie(cookieName) {
-        if (getCookie(cookieName)) {
-            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        }
-    }
+  const [activeComponent, setActiveComponent] = useState("MyAccount");  // Default active component
 
   useEffect(() => {
-    // This effect will be triggered whenever formData is updated
-    setformData({
-      ...formData,
-      CFName: CFName,
-      CLName: CLName,
-      CAddress: CAddress,
-      CPhone: CPhone,
-    });
-
-    if (CFName === "" || CLName === "" || CAddress === "" || CPhone === "") {
+    // If user is not authenticated, redirect to login page
+    if (!user) {
+      navigate("/Login");
       return;
     }
-  
-    if(formData.CustomerID === 0) {
-    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/lastid`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.data)
-      .then((data) => {
-        console.log('Fetched Data:', data)
-        const newID = data + 1;
-        setformData({
-          ...formData,
-          CustomerID: newID,
-          CFName: CFName,
-          CLName: CLName,
-          CAddress: CAddress,
-          CPhone: CPhone,
-        });
-      })
-      .then(() => {
-        // Use useEffect to ensure state update is complete before calling submitsignupForm
-      })
-      .catch((error) => console.error("Error fetching data:", error));
+
+    // Set user data
+    setCFName(user.fName);
+    setCLName(user.lName);
+    setCAddress(user.address);
+    setCPhone(user.phoneNumber);
+
+    // Check user role
+    if (user.role === "Customer") {
+      setShowUser(true);
+      // Fetch additional data for customer
+      fetchCustomerData(user.id);
+    } else if (user.role === "Manager") {
+      setShowManager(true);
+      setActiveComponent("Dashboard"); // Default component for manager
+      // Fetch additional data for manager if needed
+      fetchManagerData(user.id);
     }
-  }, [CFName, CLName, CAddress, CPhone]);
+  }, [user, navigate]);
 
+  const fetchCustomerData = async (userId) => {
+    try {
+      // Fetch customer rank
+      const rankResponse = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/customers/customer-rank/${userId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      console.log("Rank response:", rankResponse.data);
+      setRank(rankResponse.data.rank);
 
-
-    const submitloginForm = async () => {
-
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/${getCookie('userID')}`, {
-      headers: {
-          "Content-Type": "application/json",
-      },
-      })
-        .then((response) => {
-          console.log('Fetched Cookie:', response.data);
-          return response.data;
-        })
-        .then((data) => {
-            console.log('Fetched Cookie:', data);
-            setCFName(data.CFName);
-            setCLName(data.CLName);
-            setCAddress(data.CAddress);
-            setCPhone(data.CPhone);
-        })
-        .catch((error) => console.error(`Error fetching ${cookie} data:`, error));
-
-    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/customer-rank/${getCookie('userID')}`,{
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-    .then((response) => {
-      console.log('Fetched Data:', response.data)
-      return response.data
-    })
-    .then((data) => {
-      console.log('Fetched Data:', data.rank);
-      setrank(data.rank);
-    })
-
-        axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/shipping/${getCookie('userID')}`, {
+      // Fetch customer transactions
+      const transactionsResponse = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/customers/shipping/${userId}`,
+        {
           headers: {
             'Content-Type': 'application/json',
           },
-        })
-          .then((response) => {
-            console.log('Fetched Data:', response.data);
-            return response.data;
-          })
-          .then((data) => {
-            console.log('Fetched Data:', data.data);
-            settransaction(data.data);
-          })
-          .catch((error) => console.error(`Error fetching ${getCookie('userID')} data:`, error));
-        axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/promotion/`,{
+          withCredentials: true,
+        }
+      );
+      setTransaction(transactionsResponse.data.data);
+
+      // Fetch promotions
+      const promotionsResponse = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/promotion/`,
+        {
           headers: {
             "Content-Type": "application/json",
-        },
-        })
-          .then((response) => {
-            console.log('Fetched Cookie:', response.data);
-            return response.data;
-          })
-          .then((data) => {
-            console.log('Fetched data:', data);
-            setpromotion(data);
-          })
-          .catch((error) => console.error(`Error fetching ${cookie} data:`, error));
-      }
-
-      
-  const submitmanagerLoginForm = async () => {
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/employees/${getCookie('managerID')}`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-      })
-        .then((response) => {
-          console.log('Fetched cookie:', response.data);
-          return response.data;
-        })
-        .then((data) => {
-          console.log('Fetched cookie:', data);
-          setCFName(data.FirstName);
-          setCLName(data["LastName "]);
-          setCAddress(data["Address "]);
-        })
-        .catch((error) => console.error(`Error fetching ${cookie} data:`, error));
-    };
-  
-
-    const [activeComponent, setActiveComponent] = useState("MyAccount");  // Default active component
-
-  useState(() => {
-    if (getCookie("userID")) {
-      submitloginForm();
-      setShowuser(true);
+          },
+          withCredentials: true,
+        }
+      );
+      setPromotion(promotionsResponse.data);
+    } catch (error) {
+      console.error("Error fetching customer data:", error);
     }
-    else if (getCookie("managerID")) {
-      submitmanagerLoginForm();
-      setShowmanager(true);
-      setActiveComponent("Dashboard");
-    }
-  }, []);
+  };
 
-  // State for managing the modal and wheel
+  const fetchManagerData = async (managerId) => {
+    try {
+      // TODO: Fetch manager-specific data if needed
+    } catch (error) {
+      console.error("Error fetching manager data:", error);
+    }
+  };
+
+  // State for managing the modal and wheel (no changes)
   const [openWheel, setOpenWheel] = useState(false);
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeNumber, setPrizeNumber] = useState(0);
@@ -304,42 +201,39 @@ const Profile = () => {
   };
 
   return (
-    <div className="login">
+    <div className="profile">
       <Header />
-
       <div className="profile-content" >
-        {showuser &&(
-          <div className="profile-content-wrapper"> 
+        {showUser && (
+          <div className="profile-content-wrapper">
             <UserMenu username={`${CFName} ${CLName}`} onMenuClick={handleMenuClick} mode="Customer" />
             <div className="component-container">
-                {activeComponent === "MyOrders" && <MyOrders />}
-                {activeComponent === "Promotions" && <Promotions />}
-                {activeComponent === "MyAccount" && <MyAccount />}
-                {activeComponent === "AccountDetails" && <AccountDetails />}
+              {activeComponent === "MyOrders" && <MyOrders />}
+              {activeComponent === "Promotions" && <Promotions />}
+              {activeComponent === "MyAccount" && <MyAccount />}
+              {activeComponent === "AccountDetails" && <AccountDetails />}
             </div>
           </div>
         )}
-        {showmanager&&(
-          <div className="profile-content-wrapper"> 
+        {showManager && (
+          <div className="profile-content-wrapper">
             <UserMenu username={`${CFName} ${CLName}`} onMenuClick={handleMenuClick} mode="Manager" />
             <div className="component-container">
-                {activeComponent === "Restock" && <Restock />}
-                {activeComponent === "CreateProduct" && <CreateProduct />}
-                {activeComponent === "CreatePromotion" && <CreatePromotion />}
-                {activeComponent === "Dashboard" && <Dashboard />}
-                {activeComponent === "StoreOrders" && <StoreOrders />}
-
+              {activeComponent === "Dashboard" && <Dashboard />}
+              {activeComponent === "Restock" && <Restock />}
+              {activeComponent === "CreateProduct" && <CreateProduct />}
+              {activeComponent === "CreatePromotion" && <CreatePromotion />}
+              {activeComponent === "StoreOrders" && <StoreOrders />}
             </div>
           </div>
-          
         )}
-        {!showuser && !showmanager &&(
-            <div>
-              <h2> Please login to view your profile</h2>
-            </div>
+        {!showUser && !showManager && (
+          <div>
+            <h2> Please log in to view your profile</h2>
+          </div>
         )}
         {/* Floating Icon */}
-        {showuser && (
+        {showUser && (
           <Box
             sx={{
               position: 'fixed',
@@ -374,7 +268,6 @@ const Profile = () => {
             </Badge>
           </Box>
         )}
-
         {/* Modal for the Fortune Wheel */}
         <Modal open={openWheel} onClose={handleCloseWheel}>
           <Box
@@ -388,8 +281,8 @@ const Profile = () => {
               borderRadius: 2,
               p: 4,
               width: '90%',
-              maxWidth: '500px', // Set a maximum width for larger screens
-              textAlign: 'center', // Center-align text
+              maxWidth: '500px',
+              textAlign: 'center',
             }}
           >
             <Typography
@@ -468,8 +361,6 @@ const Profile = () => {
             </Button>
           </Box>
         </Modal>
-
-
       </div>
       <Footer />
     </div>

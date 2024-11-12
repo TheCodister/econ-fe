@@ -2,20 +2,22 @@ import React, { useState } from "react";
 import axios from "axios";
 import { toast } from 'react-toastify';
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../../hooks/useAuth";
 
 function SignInForm() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [state, setState] = useState({
     email: "",
     password: "",
   });
 
   const handleChange = (evt) => {
-    const value = evt.target.value;
-    setState({
-      ...state,
-      [evt.target.name]: value,
-    });
+    const { name, value } = evt.target;
+    setState((prevState) => ({
+      ...prevState,
+      [name]: value,
+    }));
   };
 
   const submitLoginForm = async (evt) => {
@@ -31,13 +33,21 @@ function SignInForm() {
             "Content-Type": "application/json",
           },
         }
-      ).then((response) => {
-        console.log('Fetched Data:', response.data)
-      }
-      )
+      );
 
-      // Navigate to the home page or dashboard after successful login
-      // navigate("/");
+      const { role, user } = response.data;
+
+      // Save user data in context
+      login({ ...user, role });
+
+      toast.success('Login successful', {
+        position: "bottom-left",
+        autoClose: 5000,
+        theme: "colored",
+      });
+
+      // Redirect to the profile page
+      navigate("/");
 
     } catch (error) {
       console.error("Error logging in:", error);
