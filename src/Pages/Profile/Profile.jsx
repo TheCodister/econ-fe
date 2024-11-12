@@ -13,9 +13,9 @@ import Dashboard from "../../Components/Common/ManagerComponents/Dashboard";
 import StoreOrders from "../../Components/Common/ManagerComponents/StoreOrders";
 import AccountDetails from "../../Components/Common/UserComponents/AccountDetail";
 import axios from "axios";
-import { Modal, IconButton, Box, Typography, Button, Badge } from '@mui/material';
+import { Modal, IconButton, Box, Typography, Button, Badge, Snackbar, Alert } from '@mui/material';
 import { keyframes } from '@mui/system';
-import CasinoIcon from '@mui/icons-material/Casino'; // Icon for the floating button
+import CasinoIcon from '@mui/icons-material/Casino';
 import { Wheel } from 'react-custom-roulette';
 import { useAuth } from "../../hooks/useAuth";
 
@@ -37,112 +37,72 @@ const pulse = keyframes`
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { user } = useAuth(); // Get user from context
+  const { user } = useAuth();
 
-  const [CFName, setCFName] = useState("");
-  const [CLName, setCLName] = useState("");
-  const [CAddress, setCAddress] = useState("");
-  const [CPhone, setCPhone] = useState("");
-  const [rank, setRank] = useState("");
-  const [transaction, setTransaction] = useState([]);
-  const [promotion, setPromotion] = useState([]);
-
-  // State to determine which components to show
+  const [activeComponent, setActiveComponent] = useState("MyAccount");
   const [showManager, setShowManager] = useState(false);
   const [showUser, setShowUser] = useState(false);
 
-  const [activeComponent, setActiveComponent] = useState("MyAccount");  // Default active component
+  // Wheel state
+  const [wheelData, setWheelData] = useState([]);
+  const [openWheel, setOpenWheel] = useState(false);
+  const [mustSpin, setMustSpin] = useState(false);
+  const [prizeNumber, setPrizeNumber] = useState(0);
+  const [fortuneChances, setFortuneChances] = useState(1);
+
+  // Snackbar state
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
 
   useEffect(() => {
-    // If user is not authenticated, redirect to login page
     if (!user) {
       navigate("/Login");
       return;
     }
 
-    // Set user data
-    setCFName(user.fName);
-    setCLName(user.lName);
-    setCAddress(user.address);
-    setCPhone(user.phoneNumber);
-
-    // Check user role
     if (user.role === "Customer") {
       setShowUser(true);
-      // Fetch additional data for customer
       fetchCustomerData(user.id);
+      fetchWheelData();
     } else if (user.role === "Manager") {
       setShowManager(true);
-      setActiveComponent("Dashboard"); // Default component for manager
-      // Fetch additional data for manager if needed
-      fetchManagerData(user.id);
+      setActiveComponent("Dashboard");
     }
   }, [user, navigate]);
 
   const fetchCustomerData = async (userId) => {
     try {
-      // Fetch customer rank
-      const rankResponse = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_API_URL}/customers/customer-rank/${userId}`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
-      console.log("Rank response:", rankResponse.data);
-      setRank(rankResponse.data.rank);
-
-      // Fetch customer transactions
-      const transactionsResponse = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_API_URL}/customers/shipping/${userId}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          withCredentials: true,
-        }
-      );
-      setTransaction(transactionsResponse.data.data);
-
-      // Fetch promotions
-      const promotionsResponse = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_API_URL}/promotion/`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
-      setPromotion(promotionsResponse.data);
+      // Fetch customer promotions or other data if needed
     } catch (error) {
       console.error("Error fetching customer data:", error);
     }
   };
 
-  const fetchManagerData = async (managerId) => {
+  const fetchWheelData = async () => {
     try {
-      // TODO: Fetch manager-specific data if needed
+      const response = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/customer`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      // Map promotions to wheel data
+      const promotions = response.data.map((promo) => ({
+        promotionId: promo.promotionId,
+        option: `${promo.product.pName} - ${(promo.discount * 100).toFixed(0)}% OFF`,
+        discount: promo.discount,
+        name: promo.name,
+        description: promo.description,
+        product: promo.product,
+      }));
+      setWheelData(promotions);
     } catch (error) {
-      console.error("Error fetching manager data:", error);
+      console.error("Error fetching wheel data:", error);
     }
   };
-
-  // State for managing the modal and wheel (no changes)
-  const [openWheel, setOpenWheel] = useState(false);
-  const [mustSpin, setMustSpin] = useState(false);
-  const [prizeNumber, setPrizeNumber] = useState(0);
-  const [wheelData, setWheelData] = useState([
-    { option: '10% OFF' },
-    { option: 'Try Again' },
-    { option: 'Free Shipping' },
-    { option: '5% OFF' },
-    { option: '20% OFF' },
-    { option: '15% OFF' },
-  ]);
-  const [fortuneChances, setFortuneChances] = useState(1);
 
   // Function to handle opening the modal
   const handleOpenWheel = () => {
@@ -156,7 +116,7 @@ const Profile = () => {
 
   // Function to handle spinning the wheel
   const handleSpinClick = () => {
-    if (fortuneChances > 0) {
+    if (fortuneChances > 0 && wheelData.length > 0) {
       const newPrizeNumber = Math.floor(Math.random() * wheelData.length);
       setPrizeNumber(newPrizeNumber);
       setMustSpin(true);
@@ -164,27 +124,31 @@ const Profile = () => {
   };
 
   // Function to handle the result when the wheel stops spinning
-  const handleWheelStop = () => {
-    const winner = wheelData[prizeNumber].option;
-    alert(`Congratulations! You won ${winner}!`);
-    // Handle granting the promotion to the user
-    // For example, send a request to the backend
-  //   // Send the promotion to the backend
-  // axios
-  //   .post(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/apply`, {
-  //     userId: getCookie('userID'),
-  //     promotion: winner,
-  //   })
-  //   .then((response) => {
-  //     // Handle success
-  //     console.log('Promotion applied:', response.data);
-  //   })
-  //   .catch((error) => {
-  //     // Handle error
-  //     console.error('Error applying promotion:', error);
-  //   });
+  const handleWheelStop = async () => {
+    const winner = wheelData[prizeNumber];
     setMustSpin(false);
-    setFortuneChances(fortuneChances - 1); // Decrease chances by 1
+    setFortuneChances(fortuneChances - 1);
+
+    // Display the result using Material-UI Snackbar
+    setSnackbarMessage(`Congratulations! You won ${winner.option}!`);
+    setOpenSnackbar(true);
+
+    // Post the customer promotion to the API
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/customer/${winner.promotionId}/${user.id}`,
+        {},
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+          withCredentials: true,
+        }
+      );
+      console.log("Promotion applied successfully");
+    } catch (error) {
+      console.error("Error applying promotion:", error);
+    }
   };
 
   // Adjust the badge position
@@ -206,7 +170,7 @@ const Profile = () => {
       <div className="profile-content" >
         {showUser && (
           <div className="profile-content-wrapper">
-            <UserMenu username={`${CFName} ${CLName}`} onMenuClick={handleMenuClick} mode="Customer" />
+            <UserMenu username={`${user.fName} ${user.lName}`} onMenuClick={handleMenuClick} mode="Customer" />
             <div className="component-container">
               {activeComponent === "MyOrders" && <MyOrders />}
               {activeComponent === "Promotions" && <Promotions />}
@@ -217,7 +181,7 @@ const Profile = () => {
         )}
         {showManager && (
           <div className="profile-content-wrapper">
-            <UserMenu username={`${CFName} ${CLName}`} onMenuClick={handleMenuClick} mode="Manager" />
+            <UserMenu username={`${user.fName} ${user.lName}`} onMenuClick={handleMenuClick} mode="Manager" />
             <div className="component-container">
               {activeComponent === "Dashboard" && <Dashboard />}
               {activeComponent === "Restock" && <Restock />}
@@ -232,6 +196,7 @@ const Profile = () => {
             <h2> Please log in to view your profile</h2>
           </div>
         )}
+
         {/* Floating Icon */}
         {showUser && (
           <Box
@@ -268,6 +233,7 @@ const Profile = () => {
             </Badge>
           </Box>
         )}
+
         {/* Modal for the Fortune Wheel */}
         <Modal open={openWheel} onClose={handleCloseWheel}>
           <Box
@@ -356,11 +322,24 @@ const Profile = () => {
                   backgroundColor: "#d81b60",
                 },
               }}
+              disabled={fortuneChances === 0 || wheelData.length === 0 || mustSpin}
             >
               Spin
             </Button>
           </Box>
         </Modal>
+
+        {/* Snackbar for displaying the result */}
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={6000}
+          onClose={() => setOpenSnackbar(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert onClose={() => setOpenSnackbar(false)} severity="success" sx={{ width: '100%' }}>
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </div>
       <Footer />
     </div>
