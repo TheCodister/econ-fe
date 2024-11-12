@@ -65,7 +65,7 @@ const Profile = () => {
       setShowUser(true);
       fetchCustomerData(user.id);
       fetchWheelData();
-    } else if (user.role === "Manager") {
+    } else if (user.role === "StoreManager") {
       setShowManager(true);
       setActiveComponent("Dashboard");
     }

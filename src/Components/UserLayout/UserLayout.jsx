@@ -25,6 +25,7 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ArrowDropDown as ArrowDropDownIcon,
 } from '@mui/icons-material';
+import { useAuth } from '../../hooks/useAuth';
 
 // Define your drawer widths and theme here...
 const drawerWidth = 250;
@@ -38,10 +39,10 @@ const theme = createTheme({
   },
   typography: {
     h4: {
-        fontFamily: "'Quicksand', sans-serif",
-        fontWeight: 900,
-        color: '#1B3B2F', // Dark greenish-black color
-        fontSize: '2.2rem',
+      fontFamily: "'Quicksand', sans-serif",
+      fontWeight: 900,
+      color: '#1B3B2F', // Dark greenish-black color
+      fontSize: '2.2rem',
     },
     // You can customize other typography variants if needed
   },
@@ -137,6 +138,7 @@ const UserLayout = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth(); // Destructure logout from useAuth
 
   // State for profile menu
   const [anchorEl, setAnchorEl] = React.useState(null);
@@ -160,11 +162,16 @@ const UserLayout = ({
   const handleMenuItemClick = (option) => {
     handleMenuClose();
     if (option === 'logout') {
-      // Implement logout functionality here
-      navigate('/login'); // Redirect to login page after logout
+      try {
+        console.log('Logging out...');
+        logout(); // Call the logout function from useAuth
+        navigate('/'); // Redirect to login page after logout
+      } catch (error) {
+        console.error('Error during logout:', error);
+      }
     } else if (option === 'profile') {
       // Navigate to profile info page
-      navigate('/profile');
+      navigate('/');
     }
   };
 
