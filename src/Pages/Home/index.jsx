@@ -86,7 +86,7 @@ const Home = () => {
         },
       })
         .then((response) => {
-          console.log('Fetched Data:', response.data);
+          console.log('Fetched top product Data:', response.data);
           return response.data;
         })
         .then((data) => {

@@ -41,7 +41,7 @@ const ShowProduct = ({ product, storeId }) => {
       try {
         if (product.discount) {
           setPromotions([product.discount]);
-          setTotalDiscount(calculateTotalDiscount([product.discount]));
+          setTotalDiscount(calculateTotalDiscount([product]));
           return;
         }
         const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/promotionfromproduct/${product.productID}`, {
@@ -64,7 +64,7 @@ const ShowProduct = ({ product, storeId }) => {
     if (!promotions || promotions.length === 0) {
       return 0; // No discounts
     }
-    const totalDiscount = promotions.reduce((total, promotion) => total + promotion, 0);
+    const totalDiscount = promotions.reduce((total, promotion) => total + promotion.discount, 0);
     // Ensure the total discount does not exceed 0.99
     return Math.min(totalDiscount, 0.99);
   };
