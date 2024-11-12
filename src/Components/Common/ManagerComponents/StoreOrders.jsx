@@ -12,7 +12,6 @@ import {
   TableContainer,
   Paper,
   Button,
-  IconButton,
   Snackbar,
   Alert,
 } from "@mui/material";
@@ -28,7 +27,11 @@ const StoreOrders = () => {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,
         });
-        setTransactions(response.data);
+        // Sort transactions by dateAndTime in descending order
+        const sortedTransactions = response.data.sort(
+          (a, b) => new Date(b.dateAndTime) - new Date(a.dateAndTime)
+        );
+        setTransactions(sortedTransactions);
       } catch (error) {
         console.error("Error fetching transactions:", error);
         setSnackbar({ open: true, message: "Failed to fetch transactions.", severity: "error" });
@@ -108,7 +111,9 @@ const StoreOrders = () => {
                 <TableCell>{tx.transactionId}</TableCell>
                 <TableCell>{tx.customerID}</TableCell>
                 <TableCell>{tx.storeID}</TableCell>
-                <TableCell>{tx.shipperID || "N/A"}</TableCell>
+                <TableCell>
+                  {tx.shipperID === "00000000-0000-0000-0000-000000000000" ? "N/A" : tx.shipperID}
+                </TableCell>
                 <TableCell>{tx.paymentMethod}</TableCell>
                 <TableCell>{new Date(tx.dateAndTime).toLocaleString()}</TableCell>
                 <TableCell>{getStatusText(tx.deliveryStatus)}</TableCell>
