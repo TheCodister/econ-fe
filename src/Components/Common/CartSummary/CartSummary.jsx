@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
 import './CartSummary.scss';
 
-const CartSummary = ({ subtotal = 0, shipping = 0, estimate = '', total = 0, checkout = false }) => {
+const CartSummary = ({ subtotal = 0, shipping = 0, estimate = '', total = 0, checkout = false, billPromotion = 0 }) => {
     const navigate = useNavigate();
 
     const handleCheckOut = () => {
@@ -30,6 +30,15 @@ const CartSummary = ({ subtotal = 0, shipping = 0, estimate = '', total = 0, che
         <span>{estimate}</span>
       </div>
       <hr />
+      {billPromotion > 0 && (
+      <div>
+        <div className="summary-item">
+          <span>Promotion</span>
+          <span>-${Number(billPromotion).toFixed(2)}</span>
+        </div>
+        <hr />
+      </div>
+      )}
       <div className="summary-item">
         <span>Total</span>
         <span>${Number(total).toFixed(2)}</span>
