@@ -24,7 +24,7 @@ const Cart = () => {
 
   const calculateTotal = () => {
     return state.cart.reduce((total, item) => {
-      return total + (item.price * (1 - item.totalDiscount)) * item.quantity;
+      return total + (item.discountedPrice) * item.quantity;
     }, 0);
   };
 
@@ -63,14 +63,14 @@ const Cart = () => {
       // Prepare transactions for each store
       const transactionPromises = Object.entries(itemsByStore).map(async ([storeID, items]) => {
         // Calculate totalPrice and totalWeight for this store
-        const totalPrice = items.reduce((sum, item) => sum + (item.price * (1 - item.totalDiscount)) * item.quantity, 0);
+        const totalPrice = items.reduce((sum, item) => sum + item.discountedPrice * item.quantity, 0);
         const totalWeight = items.reduce((sum, item) => sum + (item.weight * item.quantity), 0); // Assuming each item has a 'weight' property
 
         // Prepare the includes array
         const includes = items.map(item => ({
           productID: item.productID,
           numberOfProductInBill: item.quantity,
-          subTotal: (item.price * (1 - item.totalDiscount)) * item.quantity,
+          subTotal: item.discountedPrice * item.quantity,
         }));
 
         // Create the transaction object
@@ -96,7 +96,7 @@ const Cart = () => {
       });
 
       // Execute all transactions concurrently
-      const results = await Promise.all(transactionPromises);
+      await Promise.all(transactionPromises);
 
       // Clear the cart after successful transactions
       dispatch({ type: 'CLEAR_CART' });
@@ -182,18 +182,17 @@ const Cart = () => {
                         <p className="item-name">{item.pName}</p>
                       </Link>
                       <p className="item-storeid">Store: {item.storeName}</p>
-                      {item.promotion && item.promotion.length > 0 ? (
+                      {item.discount > 0 ? (
                         <>
                           <p className="promo-product-price">${item.price.toFixed(2)}</p>
-                          <p className="cart_product__disscount_num">{(item.totalDiscount * 100).toFixed(0)}% off</p>
-                          <p className="promo-product-discount">Price: ${(item.price * (1 - item.totalDiscount)).toFixed(2)}</p>
+                          <p className="cart_product__disscount_num">{(item.discount * 100).toFixed(0)}% off</p>
+                          <p className="promo-product-discount">Price: ${item.discountedPrice.toFixed(2)}</p>
                         </>
                       ) : (
                         <>
                           <p className="item-price">Price: ${item.price.toFixed(2)}</p>
                         </>
                       )}
-                      {/* Add other details as needed */}
                     </div>
                     <p className="item-quantity">x {item.quantity}</p>
                     <button

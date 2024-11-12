@@ -40,6 +40,10 @@ const BuyProduct = () => {
       .then((response) => {
         console.log('Product Data:', response.data);
         setProduct(response.data);
+        // Set initial discount and discountedPrice from product data
+        if (response.data.discount && response.data.discount > 0) {
+          setTotalDiscount(response.data.discount);
+        }
       })
       .catch((error) => console.error(`Error fetching product ${productId} data:`, error));
 
@@ -57,35 +61,6 @@ const BuyProduct = () => {
       .catch((error) => console.error(`Error fetching product availability for ${productId}:`, error));
   }, [productId, storeId]);
 
-  // Fetch promotion information
-  useEffect(() => {
-    const fetchPromotionInfo = async () => {
-      if (!product) {
-        return;
-      }
-      if (product && product.discount && product.discount > 0) {
-        // If the product has a discount, set the total discount to the discount amount
-        console.log('Product has a discount:', product.discount);
-        setTotalDiscount(product.discount);
-        return;
-      }
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/product/${productId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        console.log('Promotion Data:', response.data);
-        setPromotions(response.data);
-        setTotalDiscount(calculateTotalDiscount(response.data));
-      } catch (error) {
-        console.error(`Error fetching promotion info for product ${productId}:`, error);
-      }
-    };
-
-    fetchPromotionInfo();
-  }, [product]);
-
   useEffect(() => {
     axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/stores/${storeId}`, {
       headers: {
@@ -98,13 +73,51 @@ const BuyProduct = () => {
       .catch((error) => console.error(`Error fetching store ${storeId} data:`, error));
   }, [storeId]);
 
+  // Function to fetch promotion information on demand
+  const fetchPromotionInfo = async () => {
+    if (!product) {
+      toast.error('Product information is not available.', {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        theme: "colored",
+      });
+      return;
+    }
+
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/product/${productId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      console.log('Promotion Data:', response.data);
+      setPromotions(response.data);
+      setTotalDiscount(calculateTotalDiscount(response.data));
+      toast.success('Promotions applied successfully!', {
+        position: "bottom-left",
+        autoClose: 3000,
+        hideProgressBar: false,
+        theme: "colored",
+      });
+    } catch (error) {
+      console.error(`Error fetching promotion info for product ${productId}:`, error);
+      toast.error('Failed to apply promotions. Please try again later.', {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        theme: "colored",
+      });
+    }
+  };
+
   const calculateTotalDiscount = (promotions) => {
     if (!promotions || promotions.length === 0) {
-      return 0; // No discounts
+      return product.discount || 0; // Use product's discount if no promotions
     }
-    const totalDiscount = promotions.reduce((total, promotion) => total + promotion.Discount, 0);
+    const promotionDiscount = promotions.reduce((total, promotion) => total + promotion.Discount, 0);
     // Ensure the total discount does not exceed 0.99
-    return Math.min(totalDiscount, 0.99);
+    return Math.min((product.discount || 0) + promotionDiscount, 0.99);
   };
 
   const handleQuantityChange = (e) => {
@@ -174,8 +187,9 @@ const BuyProduct = () => {
         price: product.price,
         storeID: productAtStore.storeID,
         storeName: store.name,
-        promotion: promotions,
-        totalDiscount: totalDiscount
+        discount: product.discount || 0,
+        discountedPrice: product.discountedPrice || product.price,
+        weight: product.weight || 0,
         // Add other relevant info
       };
   
@@ -226,12 +240,12 @@ const BuyProduct = () => {
                   <Link className='product-category' to={`/Store/${productAtStore.storeID}`}>
                     {store?.name && <p>{store.name}</p>}
                   </Link>
-                  <p className="product-description">{product.Description}</p>
-                  {promotions && promotions.length > 0 ? (
+                  <p className="product-description">{product.description}</p>
+                  {product.discount && product.discount > 0 ? (
                     <>
                       <p className="promo-product-price_2">${product.price.toFixed(2)}</p>
                       <p className="product__disscount_num">{totalDiscount.toFixed(2) * 100}% off</p>
-                      <p className="promo-product-discount_2">${(product.price * (1 - totalDiscount)).toFixed(2)}</p>
+                      <p className="promo-product-discount_2">${(product.discountedPrice).toFixed(2)}</p>
                     </>
                   ) : (
                     <>
@@ -265,6 +279,14 @@ const BuyProduct = () => {
                 >
                 </button>
               </div>
+              {/* Optional: Button to Fetch Promotions
+              {product.discount === 0 && (
+                <div className="fetch-promotion">
+                  <button onClick={fetchPromotionInfo} className="apply-promotion-button">
+                    Apply Promotions
+                  </button>
+                </div>
+              )} */}
             </div>
           </>
         ) : (
