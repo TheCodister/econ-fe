@@ -1,3 +1,4 @@
+// src/components/SignInForm.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import { toast } from 'react-toastify';
@@ -40,14 +41,22 @@ function SignInForm() {
       // Save user data in context
       login({ ...user, role });
 
+      // Redirect based on role
+      const roleRedirectMap = {
+        "Customer": "/",
+        "StoreManager": "/Profile",
+        "Shipper": "/Shipper",
+        "Admin": "/Admin"
+      };
+
+      const redirectPath = roleRedirectMap[role] || "/";
+      navigate(redirectPath);
+
       toast.success('Login successful', {
         position: "bottom-left",
         autoClose: 5000,
         theme: "colored",
       });
-
-      // Redirect to the profile page
-      navigate("/");
 
     } catch (error) {
       console.error("Error logging in:", error);
