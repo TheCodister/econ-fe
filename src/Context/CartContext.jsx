@@ -1,4 +1,4 @@
-// CartContext.js
+// src/contexts/CartContext.js
 import React, { createContext, useContext, useReducer } from 'react';
 
 const CartContext = createContext();
@@ -29,21 +29,27 @@ const cartReducer = (state, action) => {
       return {
         ...state,
         cart: [],
+        selectedCustomerPromotion: null, // Clear promotion when cart is cleared
       };
-    // Add more cases for other actions as needed
+    case 'SET_CUSTOMER_PROMOTION':
+      return {
+        ...state,
+        selectedCustomerPromotion: action.payload,
+      };
+    case 'CLEAR_CUSTOMER_PROMOTION':
+      return {
+        ...state,
+        selectedCustomerPromotion: null,
+      };
     default:
       return state;
   }
 };
 
 export const CartProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(cartReducer, { cart: [] });
+  const [state, dispatch] = useReducer(cartReducer, { cart: [], selectedCustomerPromotion: null });
 
-  return (
-    <CartContext.Provider value={{ state, dispatch }}>
-      {children}
-    </CartContext.Provider>
-  );
+  return <CartContext.Provider value={{ state, dispatch }}>{children}</CartContext.Provider>;
 };
 
 export const useCart = () => {

@@ -10,4 +10,5 @@ export { default as SignInForm } from "./Common/SignInForm/SignInForm";
 export { default as FeatureAd } from "./Common/Feature_Ad/FeatureAd";
 export { default as CartSummary } from "./Common/CartSummary/CartSummary";
 export { default as InfoForm } from "./Common/InfoForm/InfoForm";
+export { default as PromotionTicket } from "./Common/PromotionTicket/PromotionTicket";
 export { default as StoreCard } from "./StoreCard/StoreCard";

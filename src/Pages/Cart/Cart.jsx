@@ -4,6 +4,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Header, Footer, Title, CartSummary } from '../../Components';
 import { useCart } from '../../Context/CartContext';
 import { useAuth } from '../../hooks/useAuth'; // Import useAuth
+import PromotionTicket from '../../Components/Common/PromotionTicket/PromotionTicket';
+
+import { Typography } from '@mui/material';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios'; // Import axios for making HTTP requests
@@ -14,16 +17,55 @@ const Cart = () => {
   const { state, dispatch } = useCart();
   const { user } = useAuth(); // Get user from context
   const navigate = useNavigate(); // For navigation after purchase
+  const [customerPromotions, setCustomerPromotions] = useState([]);
 
+  const customerId = user?.role === 'Customer' ? user.id : null; // Get customerId if user is a customer
+
+  useEffect(() => {
+    // Clear any selected customer promotion when entering the cart page
+    dispatch({ type: 'CLEAR_CUSTOMER_PROMOTION' });
+
+    const fetchCustomerPromotions = async () => {
+      if (!customerId) return; // Return if user is not a customer
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/customer/${customerId}`
+        );
+        setCustomerPromotions(response.data);
+        console.log('Customer promotions:', response.data);
+      } catch (error) {
+        console.error('Error fetching customer promotions:', error);
+      }
+    };
+
+    fetchCustomerPromotions();
+  }, []);
 
   const handleRemoveItem = (index) => {
     dispatch({ type: 'REMOVE_FROM_CART', payload: index });
   };
 
-  const calculateTotal = () => {
-    return state.cart.reduce((total, item) => {
-      return total + (item.discountedPrice) * item.quantity;
-    }, 0);
+  const calculateTotals = () => {
+    let subtotal = 0;
+    let discountAmount = 0;
+  
+    state.cart.forEach((item) => {
+      const itemTotal = item.discountedPrice * item.quantity;
+      subtotal += itemTotal;
+  
+      // Apply promotion if it matches the product in the cart
+      if (
+        state.selectedCustomerPromotion &&
+        state.selectedCustomerPromotion.product.productId === item.productID
+      ) {
+        discountAmount += itemTotal * state.selectedCustomerPromotion.discount;
+      }
+    });
+  
+    const temp_total = subtotal - discountAmount;
+    console.log('Subtotal:', subtotal, 'Discount:', discountAmount, 'Total:', temp_total);
+  
+    return { subtotal, discountAmount, temp_total };
   };
 
 
@@ -37,11 +79,16 @@ const Cart = () => {
     });
   };
 
+  const handleSelectPromotion = (promotion) => {
+    dispatch({ type: 'SET_CUSTOMER_PROMOTION', payload: promotion });
+  };
 
-  const subtotal = Number(calculateTotal());
+
+  const { subtotal, discountAmount, temp_total } = calculateTotals();
+  console.log('Subtotal:', subtotal, 'Discount:', discountAmount, 'Total:', temp_total);
   const shipping = subtotal > 50 ? 0 : 0; // Example: Free shipping over $50
   const estimate = "Ho Chi Minh city"; // Example: Estimate based on the shipping address
-  const total = parseFloat((subtotal + shipping).toFixed(2));
+  const total = parseFloat((temp_total + shipping).toFixed(2));
 
   return (
     <div className="cart">
@@ -106,12 +153,36 @@ const Cart = () => {
                   </div>
                 ))}
                 <div className='promotion-select'>
-                  <h3>Apply Promotion</h3>
-                  {/* Implement promotion application logic here */}
+                  <Typography variant="h5" sx={{ mt: 4 }}>
+                    Apply Promotion
+                  </Typography>
+                  <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
+                    {customerPromotions.map((promotion) => {
+                      // Check if the promotion's product is in the cart
+                      const productInCart = state.cart.find(
+                        (item) => item.productID === promotion.product.productId
+                      );
+                    
+                      return (
+                        <PromotionTicket
+                          key={promotion.promotionId}
+                          promotion={promotion}
+                          onSelect={handleSelectPromotion}
+                          disabled={!productInCart}
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
               <div className="cart-summary">
-                <CartSummary subtotal={subtotal} shipping={shipping} estimate={estimate} total={total} />
+                <CartSummary 
+                  subtotal={subtotal} 
+                  shipping={shipping} 
+                  estimate={estimate} 
+                  customerPromotion={discountAmount}
+                  total={total} 
+                />
               </div>
             </div>
           </div>
