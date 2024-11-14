@@ -253,6 +253,7 @@ const BuyProduct = () => {
                       <p className="product-card-price">${product.price.toFixed(2)}</p>
                     </>
                   )}
+                  <p className="product-description">Weight: {product.weight}g</p>
                   <div className='product-at-store'>
                     <p>Stock: </p>
                     <p className='aeon_pink'> {productAtStore.numberAtStore} Items In Stock</p>

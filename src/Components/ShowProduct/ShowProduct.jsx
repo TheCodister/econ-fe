@@ -44,14 +44,14 @@ const ShowProduct = ({ product, storeId }) => {
           setTotalDiscount(calculateTotalDiscount([product]));
           return;
         }
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/promotionfromproduct/${product.productID}`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-        const promotionInfo = response.data;
-        setPromotions(promotionInfo);
-        setTotalDiscount(calculateTotalDiscount(promotionInfo));
+        // const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/promotionfromproduct/${product.productID}`, {
+        //   headers: {
+        //     'Content-Type': 'application/json',
+        //   },
+        // });
+        // const promotionInfo = response.data;
+        // setPromotions(promotionInfo);
+        // setTotalDiscount(calculateTotalDiscount(promotionInfo));
       } catch (error) {
         console.error(`Error fetching promotion info for product ${product.productID}:`, error);
       }

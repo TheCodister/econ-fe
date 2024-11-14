@@ -131,7 +131,7 @@ const CheckOut = () => {
     setIsProcessing(true);
 
     try {
-      if (!user) {
+      if (!user || user.role !== 'Customer') {
         toast.error('You must be logged in to make a purchase.', {
           position: 'bottom-left',
           autoClose: 5000,
@@ -223,6 +223,35 @@ const CheckOut = () => {
 
       await Promise.all(transactionPromises);
 
+      // If a customer promotion was used, delete it
+      if (state.selectedCustomerPromotion) {
+        try {
+          const promotionId = state.selectedCustomerPromotion.promotionId;
+          const customerId = user.id;
+
+          await axios.delete(
+            `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/customer/${promotionId}/${customerId}`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              withCredentials: true,
+            }
+          );
+
+          console.log(`Promotion ${promotionId} for customer ${customerId} has been deleted.`);
+        } catch (deleteError) {
+          console.error('Error deleting used promotion:', deleteError);
+          // Optionally, notify the user about the failure to delete the promotion
+          toast.warn('Purchase was successful, but we failed to remove the used promotion.', {
+            position: 'bottom-left',
+            autoClose: 5000,
+            hideProgressBar: false,
+            theme: 'colored',
+          });
+        }
+      }
+
       dispatch({ type: 'CLEAR_CART' });
 
       toast.success('Purchase successful! Thank you for your order.', {
@@ -232,7 +261,7 @@ const CheckOut = () => {
         theme: 'colored',
       });
 
-      // navigate('/');
+      navigate('/');
     } catch (error) {
       console.error('Error while processing the purchase:', error);
       toast.error('There was an error processing your purchase. Please try again.', {
