@@ -17,7 +17,7 @@ const AboutUs = () => {
             {/* Right-side text */}
             <div className='about-us-rightside'>
                 <div className="about-us-text">
-                  <h1>Welcome to UIFC</h1>
+                  <h1>Welcome to IUFC</h1>
                   <p>
                     Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
                     Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
