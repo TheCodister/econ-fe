@@ -218,6 +218,34 @@ const CheckOut = () => {
         );
         console.log('Transaction response:', response.data);
 
+        const hasTransaction = response.data.new_bill && response.data.new_bill.transactionId;
+        console.log('Transaction ID:', response.data.new_bill.transactionId);
+
+        // Apply Bill Promotion if applicable
+        if (billPromotion && billPromotion.promotionId && hasTransaction) {
+          try {
+            await axios.post(
+              `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/bill/${billPromotion.promotionId}/${response.data.new_bill.transactionId}`,
+              {},
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                withCredentials: true,
+              }
+            );
+            console.log('Bill Promotion applied successfully.');
+          } catch (promoError) {
+            console.error('Error applying Bill Promotion:', promoError);
+            toast.warn('Transaction completed, but failed to apply the bill promotion.', {
+              position: 'bottom-left',
+              autoClose: 5000,
+              hideProgressBar: false,
+              theme: 'colored',
+            });
+          }
+        }
+
         return response.data;
       });
 

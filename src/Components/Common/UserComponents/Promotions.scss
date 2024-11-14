@@ -6,6 +6,9 @@
     // margin: 0 auto;
     font-family: 'Arial', sans-serif;
   
+    .promo-section {
+      margin-bottom: 16px;
+    }
 
     .promotion-title {
       font-size: 2.5rem;
@@ -23,9 +26,11 @@
     }
   
     .promo-list-title {
-      font-size: 1.6rem;
+      font-size: 1.8rem;
       color: #444;
       margin-bottom: 15px;
+      font-weight: 900;
+      font-family: 'Quicksand', sans-serif;
     }
   
     .promo-list {
