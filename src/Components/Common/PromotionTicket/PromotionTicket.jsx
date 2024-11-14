@@ -1,40 +1,115 @@
 // src/components/PromotionTicket.jsx
 import React from 'react';
-import { Card, CardContent, Typography, Button } from '@mui/material';
-import './PromotionTicket.css';
+import { Card, Typography, Button, Box } from '@mui/material';
 
 const PromotionTicket = ({ promotion, onSelect, disabled, selected }) => {
   return (
     <Card
-      className={`ticket-card ${selected ? 'selected' : ''}`}
+      variant="outlined"
+      sx={{
+        position: 'relative',
+        display: 'flex',
+        width: 400,
+        height: 120,
+        margin: '16px auto',
+        overflow: 'visible',
+        borderRadius: 0,
+        borderColor: selected ? '#fe3bd4' : '#bbb',
+        borderWidth: 2,
+        borderStyle: 'solid',
+        cursor: disabled ? 'default' : 'pointer',
+        '&:hover': {
+          borderColor: disabled ? null : '#fe3bd4',
+        },
+      }}
       onClick={() => !disabled && onSelect(promotion)}
-      style={{ opacity: disabled ? 0.6 : 1, pointerEvents: disabled ? 'none' : 'auto' }}
     >
-      <CardContent className="ticket-content">
-        <Typography variant="h6" gutterBottom>
+      {/* Left Section */}
+      <Box
+        sx={{
+          flex: 1,
+          padding: 2,
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+        }}
+      >
+        <Typography variant="h6" sx={{ color: '#fe3bd4', fontWeight: 'bold' }}>
           {promotion.name}
         </Typography>
-        <Typography variant="body2" color="textSecondary" gutterBottom>
+        <Typography variant="body2" sx={{ color: '#444', marginBottom: 1 }}>
           {promotion.description}
         </Typography>
-        <Typography variant="body1" fontWeight="bold" gutterBottom>
-          Discount: {(promotion.discount * 100).toFixed(0)}%
-        </Typography>
-      </CardContent>
-      <CardContent className="ticket-actions">
         <Button
           variant={selected ? 'contained' : 'outlined'}
           color="primary"
+          size="small"
           onClick={(e) => {
-            e.stopPropagation(); // Prevent triggering card click
+            e.stopPropagation();
             onSelect(promotion);
           }}
           disabled={disabled}
-          fullWidth
         >
-          {selected ? 'Selected' : 'Apply Promotion'}
+          {selected ? 'Selected' : 'Apply'}
         </Button>
-      </CardContent>
+      </Box>
+      {/* Dashed Divider with Cutouts */}
+      <Box
+        sx={{
+          position: 'relative',
+          width: 0,
+          borderLeft: '2px dashed #ccc',
+          marginY: 1,
+        }}
+      >
+        {/* Top Cutout */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: -25,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 30,
+            height: 30,
+            backgroundColor: '#fff',
+            borderRadius: '50%',
+            // border: '2px solid #ccc',
+            borderBottom: 'none',
+          }}
+        />
+        {/* Bottom Cutout */}
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: -25,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            width: 30,
+            height: 30,
+            backgroundColor: '#fff',
+            borderRadius: '50%',
+            // border: '2px solid #ccc',
+            borderTop: 'none',
+          }}
+        />
+      </Box>
+      {/* Right Section */}
+      <Box
+        sx={{
+          width: 100,
+          backgroundColor: '#fe3bd4',
+          color: '#fff',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: 'bold' }}>
+          {(promotion.discount * 100).toFixed(0)}%
+        </Typography>
+        <Typography variant="subtitle2">OFF</Typography>
+      </Box>
     </Card>
   );
 };

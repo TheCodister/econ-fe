@@ -67,7 +67,7 @@ const Store = () => {
               <span className="item-count-number"> {products.length} </span>
               items for you!</p>
         <div className="container">
-          <ProductList products={products} storeId={null} size='small' />
+          <ProductList products={products} storeId={storeId} size='small' />
         </div>
       </div>
       <FeatureAd />
