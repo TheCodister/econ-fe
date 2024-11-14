@@ -177,6 +177,7 @@ const BuyProduct = () => {
         hideProgressBar: false,
         theme: "colored",
       });
+      console.log(state);
   
     } else {
       // If the product does not exist, add it to the cart

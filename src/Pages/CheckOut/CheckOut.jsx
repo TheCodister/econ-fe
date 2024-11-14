@@ -3,15 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Header, Footer, Title, CartSummary, InfoForm } from '../../Components';
 import { useCart } from '../../Context/CartContext';
-import { useAuth } from '../../hooks/useAuth'; // Import useAuth
+import { useAuth } from '../../hooks/useAuth';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Paper, Stack, Box, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import axios from 'axios'; // Import axios for making HTTP requests
+import axios from 'axios';
 import '../Cart/Cart.css';
 import './CheckOut.scss';
-import { BorderLeft } from '@mui/icons-material';
 
 const PromotionTicket = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(2),
@@ -28,10 +27,10 @@ const PromotionTicket = styled(Paper)(({ theme }) => ({
     top: '50%',
     transform: 'translateY(-50%)',
   },
-  '&::before': { 
+  '&::before': {
     left: '-10px',
   },
-  '&::after': { right: '-10px' }
+  '&::after': { right: '-10px' },
 }));
 
 const StyledTypography = styled(Typography)({
@@ -45,7 +44,7 @@ const ContentBox = styled(Box)(({ theme }) => ({
   gap: theme.spacing(1),
   borderRight: `2px dashed ${theme.palette.divider}`,
   paddingRight: theme.spacing(2),
-  flex: 2
+  flex: 2,
 }));
 
 const DiscountBox = styled(Box)(({ theme }) => ({
@@ -53,41 +52,54 @@ const DiscountBox = styled(Box)(({ theme }) => ({
   flexDirection: 'column',
   alignItems: 'center',
   justifyContent: 'center',
-  flex: 1
+  flex: 1,
 }));
 
 const CheckOut = () => {
   const { state, dispatch } = useCart();
-  const { user } = useAuth(); // Get user from context
-  const navigate = useNavigate(); // For navigation after purchase
+  const { user } = useAuth();
+  const navigate = useNavigate();
 
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Credit Card');
-  const [isProcessing, setIsProcessing] = useState(false); // To manage button state
-  const [billPromotion, setBillPromotion] = useState(null); // State for BillPromotion
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [billPromotion, setBillPromotion] = useState(null);
 
   const handlePaymentMethodChange = (event) => {
     setSelectedPaymentMethod(event.target.value);
   };
 
-  const calculateTotal = () => {
-    return state.cart.reduce((total, item) => {
-      return total + item.discountedPrice * item.quantity;
-    }, 0);
+  const calculateTotals = () => {
+    let subtotal = 0;
+    let customerPromotionDiscount = 0;
+
+    state.cart.forEach((item) => {
+      const itemTotal = item.discountedPrice * item.quantity;
+      subtotal += itemTotal;
+
+      if (
+        state.selectedCustomerPromotion &&
+        state.selectedCustomerPromotion.product.productId === item.productID
+      ) {
+        customerPromotionDiscount += itemTotal * state.selectedCustomerPromotion.discount;
+      }
+    });
+
+    return { subtotal, customerPromotionDiscount };
   };
 
-  const subtotal = Number(calculateTotal());
-  const shipping = subtotal > 50 ? 0 : 0; // Example: Free shipping over $50
-  const estimate = "Ho Chi Minh city"; // Example: Estimate based on the shipping address
-  const total = billPromotion
-    ? parseFloat((subtotal + shipping - subtotal * billPromotion.discount).toFixed(2))
-    : parseFloat((subtotal + shipping).toFixed(2));
-  const billDiscount = billPromotion ? parseFloat((subtotal * billPromotion.discount).toFixed(2)) : 0;
+  const { subtotal, customerPromotionDiscount } = calculateTotals();
+  const shipping = 0;
+  const estimate = 'Ho Chi Minh city';
+
+  const totalBeforeBillPromotion = subtotal - customerPromotionDiscount + shipping;
+  const [total, setTotal] = useState(totalBeforeBillPromotion);
+  const [billDiscountAmount, setBillDiscountAmount] = useState(0);
 
   useEffect(() => {
     const fetchBillPromotion = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/bill/price/${subtotal}`,
+          `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/bill/price/${totalBeforeBillPromotion}`,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -95,38 +107,41 @@ const CheckOut = () => {
           }
         );
         setBillPromotion(response.data);
+        const discount = totalBeforeBillPromotion * response.data.discount;
+        setBillDiscountAmount(discount);
+        setTotal(totalBeforeBillPromotion - discount);
       } catch (error) {
         if (error.response && error.response.status === 404) {
-          // No promotion found
-          console.log('No BillPromotion applicable.');
+          setBillPromotion(null);
+          setBillDiscountAmount(0);
+          setTotal(totalBeforeBillPromotion);
         } else {
           console.error('Error fetching BillPromotion:', error);
         }
       }
     };
 
-    if (subtotal >= 0) {
+    if (totalBeforeBillPromotion >= 0) {
       fetchBillPromotion();
     }
-  }, [subtotal]);
+  }, [totalBeforeBillPromotion]);
 
   const handleBuyButtonClick = async () => {
-    if (isProcessing) return; // Prevent multiple submissions
+    if (isProcessing) return;
     setIsProcessing(true);
 
     try {
       if (!user) {
         toast.error('You must be logged in to make a purchase.', {
-          position: "bottom-left",
+          position: 'bottom-left',
           autoClose: 5000,
           hideProgressBar: false,
-          theme: "colored",
+          theme: 'colored',
         });
         setIsProcessing(false);
         return;
       }
 
-      // Split the cart items based on storeID
       const itemsByStore = state.cart.reduce((result, item) => {
         const storeID = item.storeID;
         if (!result[storeID]) {
@@ -136,48 +151,61 @@ const CheckOut = () => {
         return result;
       }, {});
 
-      const purchaseTime = new Date().toISOString(); // Current time in ISO format
+      const purchaseTime = new Date().toISOString();
 
-      // Prepare transactions for each store
       const transactionPromises = Object.entries(itemsByStore).map(async ([storeID, items]) => {
-        // Calculate totalPrice and totalWeight for this store
-        let totalPrice = items.reduce((sum, item) => sum + item.discountedPrice * item.quantity, 0);
-        let totalWeight = items.reduce((sum, item) => sum + (item.weight * item.quantity), 0); // Assuming each item has a 'weight' property
-
-        // Apply BillPromotion discount if applicable
+        let totalPrice = 0;
+        let totalWeight = 0;
         let discountAmount = 0;
-        if (billPromotion && totalPrice >= billPromotion.applyPrice) {
-          discountAmount = totalPrice * billPromotion.discount;
-          totalPrice = parseFloat((totalPrice - discountAmount).toFixed(2));
+
+        const includes = items.map((item) => {
+          let itemTotal = item.discountedPrice * item.quantity;
+          totalWeight += item.weight * item.quantity;
+
+          if (
+            state.selectedCustomerPromotion &&
+            state.selectedCustomerPromotion.product.productId === item.productID
+          ) {
+            const promotionDiscount = itemTotal * state.selectedCustomerPromotion.discount;
+            itemTotal -= promotionDiscount;
+            discountAmount += promotionDiscount;
+          }
+
+          totalPrice += itemTotal;
+
+          return {
+            productID: item.productID,
+            numberOfProductInBill: item.quantity,
+            subTotal: itemTotal,
+          };
+        });
+
+        let billPromotionDiscount = 0;
+        if (billPromotion) {
+          billPromotionDiscount = totalPrice * billPromotion.discount;
+          totalPrice = parseFloat((totalPrice - billPromotionDiscount).toFixed(2));
         }
 
-        // Prepare the includes array
-        const includes = items.map(item => ({
-          productID: item.productID,
-          numberOfProductInBill: item.quantity,
-          subTotal: item.discountedPrice * item.quantity,
-        }));
-
-        // Create the transaction object
         const transactionData = {
           paymentMethod: selectedPaymentMethod,
           dateAndTime: purchaseTime,
-          customerID: user.id, // Assuming user object has 'id' property
+          customerID: user.id,
           storeID: storeID,
           includes: includes,
           totalPrice: totalPrice,
           totalWeight: totalWeight,
         };
 
-        // Include discount details if applicable
         if (discountAmount > 0) {
           transactionData.discount = parseFloat(discountAmount.toFixed(2));
-          transactionData.promotionId = billPromotion.promotionId;
+          transactionData.promotionId = state.selectedCustomerPromotion.promotionId;
         }
 
-        console.log('Transaction data:', transactionData);
+        if (billPromotionDiscount > 0) {
+          transactionData.billPromotionDiscount = parseFloat(billPromotionDiscount.toFixed(2));
+          transactionData.billPromotionId = billPromotion.promotionId;
+        }
 
-        // POST /transactions
         const response = await axios.post(
           `${import.meta.env.VITE_REACT_APP_API_URL}/transactions`,
           transactionData,
@@ -193,51 +221,48 @@ const CheckOut = () => {
         return response.data;
       });
 
-      // Execute all transactions concurrently
       await Promise.all(transactionPromises);
 
-      // Clear the cart after successful transactions
       dispatch({ type: 'CLEAR_CART' });
 
       toast.success('Purchase successful! Thank you for your order.', {
-        position: "bottom-left",
+        position: 'bottom-left',
         autoClose: 5000,
         hideProgressBar: false,
-        theme: "colored",
+        theme: 'colored',
       });
 
-      // Redirect to order confirmation page or orders page
-      navigate('/');
+      // navigate('/');
     } catch (error) {
       console.error('Error while processing the purchase:', error);
       toast.error('There was an error processing your purchase. Please try again.', {
-        position: "bottom-left",
+        position: 'bottom-left',
         autoClose: 5000,
         hideProgressBar: false,
-        theme: "colored",
+        theme: 'colored',
       });
     } finally {
       setIsProcessing(false);
     }
   };
 
-
   return (
     <div className="cart">
       <Header />
       <div className="cart-content">
-        {/* <h1 className="cart-title">My Cart</h1> */}
         <Title titleText="Checkout" size={24} margin_b={12} />
         {state.cart.length === 0 ? (
           <div className="empty-cart">
-            <img src='/Images/Frame.png' alt='empty cart' className='empty-card-img' />
+            <img src="/Images/Frame.png" alt="empty cart" className="empty-card-img" />
             <p className="empty-cart-message">Your cart is empty.</p>
           </div>
         ) : (
           <div>
-            <p className="cart-item-count">You have 
+            <p className="cart-item-count">
+              You have
               <span className="item-count-number"> {state.cart.length} </span>
-            item(s) in your cart.</p>
+              item(s) in your cart.
+            </p>
             <div className="cart-items-wrapper">
               <div className="shipping-info-check">
                 <InfoForm />
@@ -277,6 +302,18 @@ const CheckOut = () => {
                     </label>
                   </div>
                 </div>
+
+                <div className="cart-summary">
+                  <CartSummary
+                    subtotal={subtotal}
+                    shipping={shipping}
+                    estimate={estimate}
+                    total={total}
+                    checkout={true} 
+                    customerPromotion={customerPromotionDiscount}
+                    billPromotion={billDiscountAmount}
+                  />
+                </div>
               </div>
               <div className="cart-items">
                 <h2>Your Order</h2>
@@ -294,8 +331,12 @@ const CheckOut = () => {
                       {item.discount > 0 ? (
                         <>
                           <p className="promo-product-price">${item.price.toFixed(2)}</p>
-                          <p className="cart_product__disscount_num">{(item.discount * 100).toFixed(0)}% off</p>
-                          <p className="promo-product-discount">Price: ${item.discountedPrice.toFixed(2)}</p>
+                          <p className="cart_product__disscount_num">
+                            {(item.discount * 100).toFixed(0)}% off
+                          </p>
+                          <p className="promo-product-discount">
+                            Price: ${item.discountedPrice.toFixed(2)}
+                          </p>
                         </>
                       ) : (
                         <>
@@ -306,52 +347,53 @@ const CheckOut = () => {
                   </div>
                 ))}
 
-                {/* Display BillPromotion if applicable */}
-                {billPromotion && (
+                {state.selectedCustomerPromotion && (
                   <PromotionTicket elevation={3}>
                     <Stack direction="row" spacing={2}>
                       <ContentBox>
-                        <StyledTypography 
-                          variant="h6" 
-                          sx={{ color: '#fe3bd4' }}
-                        >
-                          {billPromotion.name}
+                        <StyledTypography variant="h6" sx={{ color: '#fe3bd4' }}>
+                          {state.selectedCustomerPromotion.name}
                         </StyledTypography>
-                        <StyledTypography 
-                          variant="body2" 
-                        >
-                          {billPromotion.description}
+                        <StyledTypography variant="body2">
+                          {state.selectedCustomerPromotion.description}
                         </StyledTypography>
                       </ContentBox>
                       <DiscountBox>
-                        <StyledTypography 
-                          variant="h4"
-
-                          sx={{ color: '#fe3bd4' }}
-                        >
-                          {(billPromotion.discount * 100).toFixed(0)}%
+                        <StyledTypography variant="h4" sx={{ color: '#fe3bd4' }}>
+                          {(state.selectedCustomerPromotion.discount * 100).toFixed(0)}%
                         </StyledTypography>
-                        <StyledTypography 
-                          variant="subtitle2"
-                        >
-                          OFF
-                        </StyledTypography>
+                        <StyledTypography variant="subtitle2">OFF</StyledTypography>
                       </DiscountBox>
                     </Stack>
                   </PromotionTicket>
                 )}
 
-                <div className="cart-summary">
-                  <CartSummary 
-                    subtotal={subtotal} 
-                    shipping={shipping} 
-                    estimate={estimate} 
-                    total={total} 
-                    checkout={true} 
-                    billPromotion={billDiscount}
-                  />
-                </div>
-                <button className="buy-button" onClick={handleBuyButtonClick} disabled={isProcessing}>
+                {billPromotion && (
+                  <PromotionTicket elevation={3}>
+                    <Stack direction="row" spacing={2}>
+                      <ContentBox>
+                        <StyledTypography variant="h6" sx={{ color: '#fe3bd4' }}>
+                          {billPromotion.name}
+                        </StyledTypography>
+                        <StyledTypography variant="body2">
+                          {billPromotion.description}
+                        </StyledTypography>
+                      </ContentBox>
+                      <DiscountBox>
+                        <StyledTypography variant="h4" sx={{ color: '#fe3bd4' }}>
+                          {(billPromotion.discount * 100).toFixed(0)}%
+                        </StyledTypography>
+                        <StyledTypography variant="subtitle2">OFF</StyledTypography>
+                      </DiscountBox>
+                    </Stack>
+                  </PromotionTicket>
+                )}
+
+                <button
+                  className="buy-button"
+                  onClick={handleBuyButtonClick}
+                  disabled={isProcessing}
+                >
                   {isProcessing ? 'Processing...' : 'Place an Order ➔'}
                 </button>
               </div>

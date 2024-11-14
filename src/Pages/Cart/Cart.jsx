@@ -80,6 +80,10 @@ const Cart = () => {
   };
 
   const handleSelectPromotion = (promotion) => {
+    if (state.selectedCustomerPromotion?.promotionId === promotion.promotionId) {
+      dispatch({ type: 'CLEAR_CUSTOMER_PROMOTION' });
+      return;
+    }
     dispatch({ type: 'SET_CUSTOMER_PROMOTION', payload: promotion });
   };
 
@@ -152,8 +156,16 @@ const Cart = () => {
                     </button>
                   </div>
                 ))}
+                
+                {/* Apply Promotion */}
                 <div className='promotion-select'>
-                  <Typography variant="h5" sx={{ mt: 4 }}>
+                  <Typography variant="h5" 
+                  sx={{ 
+                    mt: 2,
+                    mb: 2,
+                    fontWeight: '900',
+                    fontFamily: 'Quicksand',
+                  }}>
                     Apply Promotion
                   </Typography>
                   <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
@@ -169,6 +181,7 @@ const Cart = () => {
                           promotion={promotion}
                           onSelect={handleSelectPromotion}
                           disabled={!productInCart}
+                          selected={state.selectedCustomerPromotion?.promotionId === promotion.promotionId}
                         />
                       );
                     })}

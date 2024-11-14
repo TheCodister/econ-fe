@@ -1,18 +1,32 @@
+// src/Components/CartSummary/CartSummary.jsx
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link, useNavigate } from 'react-router-dom';
+import { useCart } from '../../../Context/CartContext';
 import './CartSummary.scss';
 
-const CartSummary = ({ subtotal = 0, shipping = 0, estimate = '', total = 0, checkout = false, billPromotion = 0, customerPromotion = 0 }) => {
-    const navigate = useNavigate();
+const CartSummary = ({
+  subtotal = 0,
+  shipping = 0,
+  estimate = '',
+  total = 0,
+  checkout = false,
+  billPromotion = 0,
+  customerPromotion = 0,
+}) => {
+  const navigate = useNavigate();
+  const { state } = useCart();
+  const selectedCustomerPromotion = state.selectedCustomerPromotion || null;
 
-    const handleCheckOut = () => {
-        navigate('/CheckOut');
-    };
+  const customerPromotionName = selectedCustomerPromotion?.name;
 
-    const handleBackToCart = () => {
-        navigate('/Cart');
-    };
+  const handleCheckOut = () => {
+    navigate('/CheckOut');
+  };
+
+  const handleBackToCart = () => {
+    navigate('/Cart');
+  };
 
   return (
     <div className="cart-summary_inside">
@@ -22,13 +36,17 @@ const CartSummary = ({ subtotal = 0, shipping = 0, estimate = '', total = 0, che
       </div>
       <hr />
       {customerPromotion > 0 && (
-      <div>
-        <div className="summary-item">
-          <span>Your Promotion</span>
-          <span>-${Number(customerPromotion).toFixed(2)}</span>
+        <div>
+          <div className="summary-item">
+            {customerPromotionName ? (
+              <span>{customerPromotionName}</span>
+            ) : (
+              <span>Special Customer Promotion</span>
+            )}
+            <span>- ${Number(customerPromotion).toFixed(2)}</span>
+          </div>
+          <hr />
         </div>
-        <hr />
-      </div>
       )}
       <div className="summary-item">
         <span>Shipping</span>
@@ -40,13 +58,13 @@ const CartSummary = ({ subtotal = 0, shipping = 0, estimate = '', total = 0, che
       </div>
       <hr />
       {billPromotion > 0 && (
-      <div>
-        <div className="summary-item">
-          <span>Our Promotion</span>
-          <span>-${Number(billPromotion).toFixed(2)}</span>
+        <div>
+          <div className="summary-item">
+            <span>Special Bill Promotion</span>
+            <span>- ${Number(billPromotion).toFixed(2)}</span>
+          </div>
+          <hr />
         </div>
-        <hr />
-      </div>
       )}
       <div className="summary-item">
         <span>Total</span>
@@ -71,6 +89,9 @@ CartSummary.propTypes = {
   shipping: PropTypes.number,
   estimate: PropTypes.string,
   total: PropTypes.number,
+  checkout: PropTypes.bool,
+  billPromotion: PropTypes.number,
+  customerPromotion: PropTypes.number,
 };
 
 export default CartSummary;
