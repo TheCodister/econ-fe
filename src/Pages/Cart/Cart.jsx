@@ -63,7 +63,7 @@ const Cart = () => {
     });
   
     const temp_total = subtotal - discountAmount;
-    console.log('Subtotal:', subtotal, 'Discount:', discountAmount, 'Total:', temp_total);
+    // console.log('Subtotal:', subtotal, 'Discount:', discountAmount, 'Total:', temp_total);
   
     return { subtotal, discountAmount, temp_total };
   };
@@ -89,7 +89,7 @@ const Cart = () => {
 
 
   const { subtotal, discountAmount, temp_total } = calculateTotals();
-  console.log('Subtotal:', subtotal, 'Discount:', discountAmount, 'Total:', temp_total);
+  // console.log('Subtotal:', subtotal, 'Discount:', discountAmount, 'Total:', temp_total);
   const shipping = subtotal > 50 ? 0 : 0; // Example: Free shipping over $50
   const estimate = "Ho Chi Minh city"; // Example: Estimate based on the shipping address
   const total = parseFloat((temp_total + shipping).toFixed(2));

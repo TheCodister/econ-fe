@@ -12,23 +12,72 @@ import {
   Select,
   MenuItem,
 } from '@mui/material';
+import axios from 'axios';
 
-const AddInventoryDialog = ({ open, handleClose, handleSave, products, stores }) => {
+const categoryList = [
+  'Vegetable',
+  'Seafood',
+  'Spice',
+  'Grain',
+  'Sauce',
+  'Beef',
+  'Milk',
+  'Fruit',
+  'Pork',
+];
+
+const AddInventoryDialog = ({
+  open,
+  handleClose,
+  handleSave,
+  selectedStore,
+  existingProducts,
+}) => {
   const [inventoryRecord, setInventoryRecord] = useState({
     productID: '',
-    storeID: '',
+    storeID: selectedStore,
     numberAtStore: '',
   });
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [availableProducts, setAvailableProducts] = useState([]);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      // Fetch products in the selected category
+      axios
+        .get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/category/${selectedCategory}`)
+        .then((response) => {
+          const categoryProducts = response.data;
+          // Filter out products already in the store's inventory
+          const productsNotInStore = categoryProducts.filter(
+            (product) => !existingProducts.includes(product.productID)
+          );
+          setAvailableProducts(productsNotInStore);
+        })
+        .catch((error) => console.error('Error fetching products:', error));
+    } else {
+      setAvailableProducts([]);
+    }
+  }, [selectedCategory, existingProducts]);
 
   const handleChange = (e) => {
-    setInventoryRecord({ ...inventoryRecord, [e.target.name]: e.target.value });
+    setInventoryRecord({
+      ...inventoryRecord,
+      [e.target.name]: e.target.value,
+    });
+  };
+
+  const handleCategoryChange = (e) => {
+    setSelectedCategory(e.target.value);
+    // Reset product selection when category changes
+    setInventoryRecord((prev) => ({ ...prev, productID: '' }));
   };
 
   const onSave = () => {
-    // Validate data
     handleSave({
       ...inventoryRecord,
       numberAtStore: parseInt(inventoryRecord.numberAtStore, 10),
+      storeID: selectedStore,
     });
     handleClose();
   };
@@ -38,35 +87,40 @@ const AddInventoryDialog = ({ open, handleClose, handleSave, products, stores })
       <DialogTitle>Add Inventory Record</DialogTitle>
       <DialogContent>
         <FormControl fullWidth margin="dense" required>
-          <InputLabel>Product</InputLabel>
+          <InputLabel>Category</InputLabel>
           <Select
-            name="productID"
-            value={inventoryRecord.productID}
-            onChange={handleChange}
-            label="Product"
+            name="category"
+            value={selectedCategory}
+            onChange={handleCategoryChange}
+            label="Category"
           >
-            {products.map((product) => (
-              <MenuItem key={product.id} value={product.id}>
-                {product.pName}
+            {categoryList.map((category) => (
+              <MenuItem key={category} value={category}>
+                {category}
               </MenuItem>
             ))}
           </Select>
         </FormControl>
-        <FormControl fullWidth margin="dense" required>
-          <InputLabel>Store</InputLabel>
-          <Select
-            name="storeID"
-            value={inventoryRecord.storeID}
-            onChange={handleChange}
-            label="Store"
-          >
-            {stores.map((store) => (
-              <MenuItem key={store.id} value={store.id}>
-                {store.name}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        {selectedCategory && (
+          <FormControl fullWidth margin="dense" required>
+            <InputLabel>Product</InputLabel>
+            <Select
+              name="productID"
+              value={inventoryRecord.productID}
+              onChange={handleChange}
+              label="Product"
+            >
+              {availableProducts.length === 0 && (
+                <MenuItem disabled>No products available</MenuItem>
+              )}
+              {availableProducts.map((product) => (
+                <MenuItem key={product.productID} value={product.productID}>
+                  {product.pName}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
         <TextField
           margin="dense"
           label="Quantity"
@@ -80,7 +134,15 @@ const AddInventoryDialog = ({ open, handleClose, handleSave, products, stores })
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={onSave} variant="contained">
+        <Button
+          onClick={onSave}
+          variant="contained"
+          disabled={
+            !inventoryRecord.productID ||
+            !inventoryRecord.numberAtStore ||
+            !selectedCategory
+          }
+        >
           Add
         </Button>
       </DialogActions>
