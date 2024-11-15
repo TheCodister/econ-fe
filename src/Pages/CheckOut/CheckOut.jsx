@@ -376,6 +376,13 @@ const CheckOut = () => {
                 <h2>Your Order</h2>
                 {state.cart.map((item, index) => (
                   <div key={index} className="cart-item">
+                    <div className="cart-img-wrapper">
+                      {item.imageURL ? (
+                        <img src={item.imageURL} alt={item.pName} className="cart__img" />
+                      ) : (
+                        <img src="/Images/no-image.jpg" alt={item.pName} className="cart__img" />
+                      )}
+                    </div>
                     <div className="item-details">
                       <Link
                         to={`/buy-product/${item.productID}/${item.storeID}`}
@@ -388,12 +395,10 @@ const CheckOut = () => {
                       {item.discount > 0 ? (
                         <>
                           <p className="promo-product-price">${item.price.toFixed(2)}</p>
-                          <p className="cart_product__disscount_num">
-                            {(item.discount * 100).toFixed(0)}% off
-                          </p>
-                          <p className="promo-product-discount">
-                            Price: ${item.discountedPrice.toFixed(2)}
-                          </p>
+                          <div className='flex-box'>
+                            <p className="promo-product-discount">Price: ${item.discountedPrice.toFixed(2)}</p>
+                            <p className="cart_product__disscount_num">{(item.discount * 100).toFixed(0)}% off</p>
+                          </div>
                         </>
                       ) : (
                         <>
