@@ -125,7 +125,14 @@ const ManagePromotions = () => {
 
   const handleDeletePromotion = async (promotionId) => {
     try {
-      await axios.delete(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/${promotionId}`);
+      await axios.delete(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/${promotionId}`,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          withCredentials: true,
+        }
+      );
       setPromotions((prev) => prev.filter((promo) => promo.id !== promotionId));
       toast.success('Promotion deleted successfully');
     } catch (error) {

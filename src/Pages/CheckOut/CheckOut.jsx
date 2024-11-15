@@ -145,10 +145,10 @@ const CheckOut = () => {
 
       if (selectedPaymentMethod === 'Momo') {
         // Generate random 32-character orderId
-        const orderId = uuidv4().replace(/-/g, '');
+        const orderId = uuidv4();
         const fullName = 'IUFC';
-        const orderInformation = 'Payment for your order';
-        const amount = total.toFixed(0);
+        const orderInformation = 'paymentforyourorder';
+        const amount = total.toFixed(2);
 
         const paymentData = {
           fullName: fullName,
