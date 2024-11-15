@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { Paper, Stack, Box, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
+import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 import '../Cart/Cart.css';
 import './CheckOut.scss';
@@ -139,6 +140,52 @@ const CheckOut = () => {
           theme: 'colored',
         });
         setIsProcessing(false);
+        return;
+      }
+
+      if (selectedPaymentMethod === 'Momo') {
+        // Generate random 32-character orderId
+        const orderId = uuidv4().replace(/-/g, '');
+        const fullName = 'IUFC';
+        const orderInformation = 'Payment for your order';
+        const amount = total.toFixed(0);
+
+        const paymentData = {
+          fullName: fullName,
+          orderId: orderId,
+          orderInformation: orderInformation,
+          amount: parseFloat(amount),
+        };
+        console.log('Momo payment data:', paymentData);
+
+        try {
+          const response = await axios.post(
+            `${import.meta.env.VITE_REACT_APP_API_URL}/payment/momo/createpayment`,
+            paymentData,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              withCredentials: true,
+            }
+          );
+          console.log('Momo payment response:', response.data);
+          // Redirect to the payment URL provided by the API
+          if (response.data && response.data.payUrl) {
+            window.location.href = response.data.payUrl;
+          } else {
+            throw new Error('Invalid response from payment gateway.');
+          }
+        } catch (error) {
+          console.error('Error initiating Momo payment:', error);
+          toast.error('There was an error initiating Momo payment. Please try again.', {
+            position: 'bottom-left',
+            autoClose: 5000,
+            hideProgressBar: false,
+            theme: 'colored',
+          });
+          setIsProcessing(false);
+        }
         return;
       }
 
@@ -340,11 +387,11 @@ const CheckOut = () => {
                     <label>
                       <input
                         type="radio"
-                        value="Debit Card"
-                        checked={selectedPaymentMethod === 'Debit Card'}
+                        value="Momo"
+                        checked={selectedPaymentMethod === 'Momo'}
                         onChange={handlePaymentMethodChange}
                       />
-                      Debit Card
+                      Momo
                     </label>
                   </div>
                   <div>
