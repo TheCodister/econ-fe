@@ -1,5 +1,5 @@
 // src/admin/AddPromotionDialog.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -16,10 +16,22 @@ import {
   OutlinedInput,
   FormHelperText,
 } from '@mui/material';
+import axios from 'axios';
 
 const promotionTypes = ['ProductPromotion', 'BillPromotion', 'CustomerPromotion'];
+const categoryList = [
+  'Vegetable',
+  'Seafood',
+  'Spice',
+  'Grain',
+  'Sauce',
+  'Beef',
+  'Milk',
+  'Fruit',
+  'Pork',
+];
 
-const AddPromotionDialog = ({ open, handleClose, handleSave, products }) => {
+const AddPromotionDialog = ({ open, handleClose, handleSave }) => {
   const [promotion, setPromotion] = useState({
     name: '',
     description: '',
@@ -27,8 +39,29 @@ const AddPromotionDialog = ({ open, handleClose, handleSave, products }) => {
     startDay: '',
     endDay: '',
     type: '',
+    category: '',
     specificFields: {},
   });
+  const [filteredProducts, setFilteredProducts] = useState([]);
+
+  useEffect(() => {
+    const fetchProductsByCategory = async () => {
+      if (promotion.category) {
+        try {
+          const response = await axios.get(
+            `${import.meta.env.VITE_REACT_APP_API_URL}/products/category/${promotion.category}`
+          );
+          setFilteredProducts(response.data);
+        } catch (error) {
+          console.error('Error fetching products by category:', error);
+        }
+      } else {
+        setFilteredProducts([]);
+      }
+    };
+
+    fetchProductsByCategory();
+  }, [promotion.category]);
 
   const handleChange = (e) => {
     setPromotion({ ...promotion, [e.target.name]: e.target.value });
@@ -41,10 +74,35 @@ const AddPromotionDialog = ({ open, handleClose, handleSave, products }) => {
     });
   };
 
+  const handleProductSelection = (event) => {
+    const { value } = event.target;
+    if (promotion.type === 'CustomerPromotion') {
+      setPromotion({
+        ...promotion,
+        specificFields: { productId: value },
+      });
+    } else {
+      setPromotion({
+        ...promotion,
+        specificFields: { productIds: value },
+      });
+    }
+  };
+
   const onSave = () => {
-    // Validate promotion data
     handleSave(promotion);
     handleClose();
+    setPromotion({
+      name: '',
+      description: '',
+      discount: '',
+      startDay: '',
+      endDay: '',
+      type: '',
+      category: '',
+      specificFields: {},
+    });
+    setFilteredProducts([]);
   };
 
   return (
@@ -116,6 +174,23 @@ const AddPromotionDialog = ({ open, handleClose, handleSave, products }) => {
             ))}
           </Select>
         </FormControl>
+        {promotion.type && promotion.type !== 'BillPromotion' && (
+          <FormControl fullWidth margin="dense" required>
+            <InputLabel>Category</InputLabel>
+            <Select
+              name="category"
+              value={promotion.category}
+              onChange={handleChange}
+              label="Category"
+            >
+              {categoryList.map((category) => (
+                <MenuItem value={category} key={category}>
+                  {category}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        )}
 
         {/* Specific Fields Based on Promotion Type */}
         {promotion.type === 'ProductPromotion' && (
@@ -125,18 +200,18 @@ const AddPromotionDialog = ({ open, handleClose, handleSave, products }) => {
               multiple
               name="productIds"
               value={promotion.specificFields.productIds || []}
-              onChange={handleSpecificFieldChange}
+              onChange={handleProductSelection}
               input={<OutlinedInput label="Products" />}
               renderValue={(selected) =>
                 selected
                   .map(
                     (productId) =>
-                      products.find((product) => product.productID === productId)?.pName || ''
+                      filteredProducts.find((product) => product.productID === productId)?.pName || ''
                   )
                   .join(', ')
               }
             >
-              {products.map((product) => (
+              {filteredProducts.map((product) => (
                 <MenuItem key={product.productID} value={product.productID}>
                   <Checkbox
                     checked={
@@ -178,15 +253,22 @@ const AddPromotionDialog = ({ open, handleClose, handleSave, products }) => {
         )}
 
         {promotion.type === 'CustomerPromotion' && (
-          <TextField
-            margin="dense"
-            label="Product ID"
-            name="productId"
-            value={promotion.specificFields.productId || ''}
-            onChange={handleSpecificFieldChange}
-            fullWidth
-            required
-          />
+          <FormControl fullWidth margin="dense">
+            <InputLabel>Product</InputLabel>
+            <Select
+              name="productId"
+              value={promotion.specificFields.productId || ''}
+              onChange={handleProductSelection}
+              label="Product"
+            >
+              {filteredProducts.map((product) => (
+                <MenuItem key={product.productID} value={product.productID}>
+                  {product.pName}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>Select a product for the promotion</FormHelperText>
+          </FormControl>
         )}
       </DialogContent>
       <DialogActions>

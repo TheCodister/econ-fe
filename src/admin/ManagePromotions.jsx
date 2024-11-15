@@ -22,29 +22,26 @@ import {
   Delete as DeleteIcon,
   Add as AddIcon,
 } from '@mui/icons-material';
+import { toast } from 'react-toastify';
 import axios from 'axios';
 
 const ManagePromotions = () => {
   const [promotions, setPromotions] = useState([]);
   const [openAddDialog, setOpenAddDialog] = useState(false);
-  const [products, setProducts] = useState([]);
 
   useEffect(() => {
     const fetchPromotions = async () => {
       try {
-        // Fetch promotions from different endpoints using Axios
         const [billPromotionsRes, customerPromotionsRes, productPromotionsRes] = await Promise.all([
           axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/bill`),
           axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/customer`),
           axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/product`),
         ]);
 
-        // Extract data from responses
         const billPromotions = billPromotionsRes.data;
         const customerPromotions = customerPromotionsRes.data;
         const productPromotions = productPromotionsRes.data;
 
-        // Add a 'type' field to distinguish promotion types
         const formattedBillPromotions = billPromotions.map((promo) => ({
           ...promo,
           type: 'Bill Promotion',
@@ -58,7 +55,6 @@ const ManagePromotions = () => {
           type: 'Product Promotion',
         }));
 
-        // Combine all promotions into one array
         setPromotions([
           ...formattedBillPromotions,
           ...formattedCustomerPromotions,
@@ -69,17 +65,8 @@ const ManagePromotions = () => {
       }
     };
 
-    const fetchProducts = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products`);
-        setProducts(response.data);
-      } catch (error) {
-        console.error('Error fetching products:', error);
-      }
-    };
 
     fetchPromotions();
-    fetchProducts();
   }, []);
 
   const handleAddPromotion = () => {
@@ -87,9 +74,48 @@ const ManagePromotions = () => {
   };
 
   const handleSavePromotion = async (newPromotion) => {
-    // Handle saving new promotion using Axios
-    // You need to implement the API call based on your backend
-    console.log('Save new promotion:', newPromotion);
+    try {
+      let endpoint = '';
+      let requestBody = {
+        discount: parseFloat(newPromotion.discount),
+        name: newPromotion.name,
+        description: newPromotion.description,
+        startDay: new Date(newPromotion.startDay).toISOString(),
+        endDay: new Date(newPromotion.endDay).toISOString(),
+      };
+
+      switch (newPromotion.type) {
+        case 'BillPromotion':
+          endpoint = `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/bill`;
+          requestBody.applyPrice = parseFloat(newPromotion.specificFields.applyPrice);
+          requestBody.promotionChance = parseFloat(newPromotion.specificFields.promotionChance);
+          break;
+        case 'CustomerPromotion':
+          endpoint = `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/customer`;
+          requestBody.productId = newPromotion.specificFields.productId;
+          break;
+        case 'ProductPromotion':
+          endpoint = `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/product`;
+          requestBody.productIdList = newPromotion.specificFields.productIds;
+          break;
+        default:
+          throw new Error('Invalid promotion type');
+      }
+
+      console.log('Saving promotion:', requestBody);
+      await axios.post(endpoint, requestBody, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      });
+
+      setPromotions((prev) => [...prev, newPromotion]);
+      toast.success('Promotion added successfully');
+    } catch (error) {
+      console.error('Error saving promotion:', error);
+      toast.error('Failed to add promotion');
+    }
   };
 
   const handleEditPromotion = (promotionId) => {
@@ -97,9 +123,15 @@ const ManagePromotions = () => {
     console.log('Edit promotion:', promotionId);
   };
 
-  const handleDeletePromotion = (promotionId) => {
-    // Handle deleting promotion
-    console.log('Delete promotion:', promotionId);
+  const handleDeletePromotion = async (promotionId) => {
+    try {
+      await axios.delete(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/${promotionId}`);
+      setPromotions((prev) => prev.filter((promo) => promo.id !== promotionId));
+      toast.success('Promotion deleted successfully');
+    } catch (error) {
+      console.error('Error deleting promotion:', error);
+      toast.error('Failed to delete promotion');
+    }
   };
 
   return (
@@ -120,7 +152,6 @@ const ManagePromotions = () => {
         open={openAddDialog}
         handleClose={() => setOpenAddDialog(false)}
         handleSave={handleSavePromotion}
-        products={products}
       />
       <TableContainer component={Paper}>
         <Table aria-label="promotions table">
@@ -159,7 +190,7 @@ const ManagePromotions = () => {
                     variant="outlined"
                   />
                 </TableCell>
-                <TableCell>{promotion.discount * 100}%</TableCell>
+                <TableCell>{(promotion.discount * 100).toFixed(0)}%</TableCell>
                 <TableCell>
                   {promotion.type === 'Bill Promotion' && (
                     <Typography variant="body2">
@@ -168,25 +199,23 @@ const ManagePromotions = () => {
                       Chance: {promotion.promotionChance}
                     </Typography>
                   )}
-                  {promotion.type === 'Customer Promotion' &&
-                    promotion.product && (
-                      <Typography variant="body2">
-                        Product: {promotion.product.pName}
-                      </Typography>
-                    )}
-                  {promotion.type === 'Product Promotion' &&
-                    promotion.products && (
-                      <Stack direction="row" spacing={1}>
-                        {promotion.products.map((product) => (
-                          <Tooltip
-                            key={product.productID || product.productId}
-                            title={product.pName}
-                          >
-                            <Chip label={product.pName} />
-                          </Tooltip>
-                        ))}
-                      </Stack>
-                    )}
+                  {promotion.type === 'Customer Promotion' && promotion.product && (
+                    <Typography variant="body2">
+                      Product: {promotion.product.pName}
+                    </Typography>
+                  )}
+                  {promotion.type === 'Product Promotion' && promotion.products && (
+                    <Stack direction="row" spacing={1}>
+                      {promotion.products.map((product) => (
+                        <Tooltip
+                          key={product.productID || product.productId}
+                          title={product.pName}
+                        >
+                          <Chip label={product.pName} />
+                        </Tooltip>
+                      ))}
+                    </Stack>
+                  )}
                 </TableCell>
                 <TableCell>
                   {new Date(promotion.startDay).toLocaleDateString()}
