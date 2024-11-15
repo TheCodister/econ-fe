@@ -28,7 +28,8 @@ const BuyProduct = () => {
     '/Images/no-image.jpg'
   ];
 
-  const [selectedImage, setSelectedImage] = useState(defaultImages[0]);
+  const [images, setImages] = useState(defaultImages);
+  const [selectedImage, setSelectedImage] = useState(images[0]);
 
   useEffect(() => {
     // Fetch product details based on the productId
@@ -40,6 +41,14 @@ const BuyProduct = () => {
       .then((response) => {
         console.log('Product Data:', response.data);
         setProduct(response.data);
+        // Set images based on imageURL
+        if (response.data.imageURL) {
+          setImages(Array(4).fill(response.data.imageURL));
+          setSelectedImage(response.data.imageURL);
+        } else {
+          setImages(defaultImages);
+          setSelectedImage(defaultImages[0]);
+        }
         // Set initial discount and discountedPrice from product data
         if (response.data.discount && response.data.discount > 0) {
           setTotalDiscount(response.data.discount);
@@ -191,6 +200,7 @@ const BuyProduct = () => {
         discount: product.discount || 0,
         discountedPrice: product.discountedPrice || product.price,
         weight: product.weight || 0,
+        imageURL: product.imageURL || '/Images/no-image.jpg',
         // Add other relevant info
       };
   
@@ -215,18 +225,22 @@ const BuyProduct = () => {
           <>
             <div className="product-image-section">
               {/* Main Product Image */}
-              <img src={selectedImage} alt={product.pName} className="product-image" />
+              <div className="main-image-container">
+                <img src={selectedImage} alt={product.pName} className="product-image" />
+              </div>
 
               {/* Thumbnail Images */}
               <div className="product-thumbnails">
-                {defaultImages.map((img, index) => (
-                  <img
-                    key={index}
-                    src={img}
-                    alt={`Thumbnail ${index + 1}`}
-                    className="thumbnail-image"
-                    onClick={() => setSelectedImage(img)}
-                  />
+                {images.map((img, index) => (
+                  <div key={index} className="thumbnail-container">
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="thumbnail-image"
+                      onError={(e) => { e.target.src = '/Images/no-image.jpg'; }}
+                      onClick={() => setSelectedImage(img)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
@@ -245,7 +259,7 @@ const BuyProduct = () => {
                   {product.discount && product.discount > 0 ? (
                     <>
                       <p className="promo-product-price_2">${product.price.toFixed(2)}</p>
-                      <p className="product__disscount_num">{totalDiscount.toFixed(2) * 100}% off</p>
+                      <p className="product__disscount_num">{(totalDiscount * 100).toFixed(0)}% off</p>
                       <p className="promo-product-discount_2">${(product.discountedPrice).toFixed(2)}</p>
                     </>
                   ) : (

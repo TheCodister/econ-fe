@@ -85,9 +85,9 @@ const ShowProduct = ({ product, storeId }) => {
         )}
       </div> */}
       <div className="product-card__body">
-        <div className='product-img-wrapper'>
-          {product.Image ? (
-            <img src={`${product.Image}`} alt={product.pName} className="product-card__img" />
+        <div className="product-img-wrapper">
+          {product.imageURL ? (
+            <img src={product.imageURL} alt={product.pName} className="product-card__img" />
           ) : (
             <img src="/Images/no-image.jpg" alt={product.pName} className="product-card__img" />
           )}
