@@ -66,21 +66,24 @@ const ManageInventory = () => {
     const record = inventoryData.find(
       (item) => item.productID === productID && item.storeID === storeID
     );
-    setSelectedRecord(record);
+    const store = stores.find((s) => s.storeID === storeID);
+    setSelectedRecord({ ...record, storeName: store.name });
     setOpenEditDialog(true);
   };
 
   const handleSaveInventory = (updatedRecord) => {
-    // Send PUT request to update the inventory record
+    // Send PUT request to add or restock inventory
     axios
-      .put(`${import.meta.env.VITE_REACT_APP_API_URL}/inventory`, updatedRecord)
-      .then((response) => {
+      .put(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/products/addtostore/${updatedRecord.productID}/${updatedRecord.storeID}/${updatedRecord.numberAtStore}`
+      )
+      .then(() => {
         // Update the inventoryData state
-        setInventoryData(
-          inventoryData.map((item) =>
-            item.productID === response.data.productID &&
-            item.storeID === response.data.storeID
-              ? response.data
+        setInventoryData((prevData) =>
+          prevData.map((item) =>
+            item.productID === updatedRecord.productID &&
+            item.storeID === updatedRecord.storeID
+              ? { ...item, numberAtStore: item.numberAtStore + updatedRecord.numberAtStore }
               : item
           )
         );
@@ -93,12 +96,12 @@ const ManageInventory = () => {
     // Send DELETE request to delete the inventory record
     axios
       .delete(
-        `${import.meta.env.VITE_REACT_APP_API_URL}/inventory/${productID}/${storeID}`
+        `${import.meta.env.VITE_REACT_APP_API_URL}/products/${productID}/${storeID}`
       )
       .then(() => {
         // Update the inventoryData state
-        setInventoryData(
-          inventoryData.filter(
+        setInventoryData((prevData) =>
+          prevData.filter(
             (item) =>
               !(item.productID === productID && item.storeID === storeID)
           )
@@ -112,12 +115,46 @@ const ManageInventory = () => {
   };
 
   const handleSaveNewInventory = (newRecord) => {
-    // Send POST request to add inventory record
+    // Send PUT request to add or restock inventory
     axios
-      .post(`${import.meta.env.VITE_REACT_APP_API_URL}/inventory`, newRecord)
-      .then((response) => {
-        // Update the inventoryData state
-        setInventoryData([...inventoryData, response.data]);
+      .put(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/products/addtostore/${newRecord.productID}/${newRecord.storeID}/${newRecord.numberAtStore}`
+      )
+      .then(() => {
+        // Check if the product already exists in inventoryData
+        const existingRecord = inventoryData.find(
+          (item) =>
+            item.productID === newRecord.productID &&
+            item.storeID === newRecord.storeID
+        );
+        if (existingRecord) {
+          // Update the existing record's quantity
+          setInventoryData((prevData) =>
+            prevData.map((item) =>
+              item.productID === newRecord.productID &&
+              item.storeID === newRecord.storeID
+                ? {
+                    ...item,
+                    numberAtStore:
+                      parseInt(item.numberAtStore, 10) +
+                      parseInt(newRecord.numberAtStore, 10),
+                  }
+                : item
+            )
+          );
+        } else {
+          // Add new record to inventoryData
+          const productDetails = availableProducts.find(
+            (product) => product.productID === newRecord.productID
+          );
+          const newInventoryItem = {
+            productID: newRecord.productID,
+            storeID: newRecord.storeID,
+            numberAtStore: newRecord.numberAtStore,
+            product: productDetails,
+          };
+          setInventoryData((prevData) => [...prevData, newInventoryItem]);
+        }
         setOpenAddDialog(false);
       })
       .catch((error) => console.error('Error adding inventory record:', error));
