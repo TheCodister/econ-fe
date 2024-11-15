@@ -14,28 +14,65 @@ import {
   Button,
   Snackbar,
   Alert,
+  LinearProgress,
 } from '@mui/material';
 import { useAuth } from '../hooks/useAuth';
+import OrderDetailsDialog from './Components/OrderDetailsDialog';
 
 const Dashboard = () => {
   const [shipperOrders, setShipperOrders] = useState([]);
+  const [shipperInfo, setShipperInfo] = useState(null);
+  const [capacityUsage, setCapacityUsage] = useState(0);
+  const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'success' });
   const { user } = useAuth(); // Get the current shipper's information
 
   useEffect(() => {
+    const fetchShipperInfo = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_API_URL}/shippers/${user.id}`,
+          {
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true,
+          }
+        );
+        setShipperInfo(response.data);
+      } catch (error) {
+        console.error('Error fetching shipper info:', error);
+        setSnackbar({
+          open: true,
+          message: 'Failed to fetch shipper information.',
+          severity: 'error',
+        });
+      }
+    };
+
     const fetchShipperOrders = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/transactions`, {
-          headers: { 'Content-Type': 'application/json' },
-          withCredentials: true,
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_API_URL}/transactions`,
+          {
+            headers: { 'Content-Type': 'application/json' },
+            withCredentials: true,
+          }
+        );
 
-        // Filter transactions assigned to the current shipper with status Accepted (2) or OnDelivery (3)
+        // Filter transactions assigned to the current shipper with status Accepted (2) or On Delivery (3)
         const filteredOrders = response.data.filter(
           (tx) =>
             tx.shipperID === user.id &&
             (tx.deliveryStatus === 2 || tx.deliveryStatus === 3)
         );
+
+        // Calculate total weight
+        const totalWeight = filteredOrders.reduce(
+          (sum, tx) => sum + tx.totalWeight,
+          0
+        );
+
+        setCapacityUsage(totalWeight);
 
         // Sort transactions by dateAndTime in descending order
         const sortedOrders = filteredOrders.sort(
@@ -53,8 +90,19 @@ const Dashboard = () => {
       }
     };
 
+    fetchShipperInfo();
     fetchShipperOrders();
   }, [user.id]);
+
+  const handleOpenDetails = (transactionId) => {
+    setSelectedTransactionId(transactionId);
+    setOpenDetailsDialog(true);
+  };
+
+  const handleCloseDetails = () => {
+    setOpenDetailsDialog(false);
+    setSelectedTransactionId(null);
+  };
 
   const handleUpdateStatus = async (transactionId, newStatus) => {
     try {
@@ -67,12 +115,6 @@ const Dashboard = () => {
           withCredentials: true,
         }
       );
-
-      // If setting to Delivered, no need to assign shipper again
-      if (newStatus === 3) {
-        // Optionally, you can assign the shipper here if not already assigned
-        // For this case, shipperID is already assigned
-      }
 
       // Update local state
       setShipperOrders((prev) =>
@@ -107,10 +149,6 @@ const Dashboard = () => {
 
   const getStatusText = (status) => {
     switch (status) {
-      case 0:
-        return 'Pending';
-      case 1:
-        return 'Prepared';
       case 2:
         return 'Accepted';
       case 3:
@@ -122,20 +160,30 @@ const Dashboard = () => {
     }
   };
 
+  const vehicleCapacity = shipperInfo ? shipperInfo.vehicleCapacity * 60 : 0;
+  const capacityPercentage = vehicleCapacity
+    ? Math.min((capacityUsage / vehicleCapacity) * 100, 100)
+    : 0;
+
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
         Shipper Dashboard
       </Typography>
+      {shipperInfo && (
+        <Box mb={2}>
+          <Typography variant="h6">
+            Vehicle Capacity Usage: {capacityUsage}g / {vehicleCapacity}g
+          </Typography>
+          <LinearProgress variant="determinate" value={capacityPercentage} />
+        </Box>
+      )}
       <TableContainer component={Paper}>
         <Table aria-label="shipper orders table">
           <TableHead>
             <TableRow>
-              <TableCell>Transaction ID</TableCell>
-              <TableCell>Customer ID</TableCell>
-              <TableCell>Store ID</TableCell>
-              <TableCell>Payment Method</TableCell>
               <TableCell>Date and Time</TableCell>
+              <TableCell>Payment Method</TableCell>
               <TableCell>Delivery Status</TableCell>
               <TableCell>Total Price</TableCell>
               <TableCell>Total Weight</TableCell>
@@ -145,19 +193,24 @@ const Dashboard = () => {
           <TableBody>
             {shipperOrders.map((tx) => (
               <TableRow key={tx.transactionId}>
-                <TableCell>{tx.transactionId}</TableCell>
-                <TableCell>{tx.customerID}</TableCell>
-                <TableCell>{tx.storeID}</TableCell>
-                <TableCell>{tx.paymentMethod}</TableCell>
                 <TableCell>{new Date(tx.dateAndTime).toLocaleString()}</TableCell>
+                <TableCell>{tx.paymentMethod}</TableCell>
                 <TableCell>{getStatusText(tx.deliveryStatus)}</TableCell>
                 <TableCell>${tx.totalPrice.toFixed(2)}</TableCell>
                 <TableCell>{tx.totalWeight} g</TableCell>
                 <TableCell align="center">
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => handleOpenDetails(tx.transactionId)}
+                    sx={{ marginRight: '8px' }}
+                  >
+                    View Details
+                  </Button>
                   {tx.deliveryStatus === 2 && (
                     <Button
                       variant="contained"
-                      color="primary"
+                      color="secondary"
                       onClick={() => handleUpdateStatus(tx.transactionId, 3)}
                       sx={{ marginRight: '8px' }}
                     >
@@ -178,14 +231,23 @@ const Dashboard = () => {
             ))}
             {shipperOrders.length === 0 && (
               <TableRow>
-                <TableCell colSpan={9} align="center">
-                  No current orders to ship.
+                <TableCell colSpan={6} align="center">
+                  No current orders.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Order Details Dialog */}
+      {selectedTransactionId && (
+        <OrderDetailsDialog
+          open={openDetailsDialog}
+          onClose={handleCloseDetails}
+          transactionId={selectedTransactionId}
+        />
+      )}
 
       {/* Snackbar for notifications */}
       <Snackbar

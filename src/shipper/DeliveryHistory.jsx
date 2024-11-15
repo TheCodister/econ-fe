@@ -34,11 +34,9 @@ const DeliveryHistory = () => {
             withCredentials: true,
           }
         );
-        console.log('All deliveries:', response.data);
         const filteredDeliveries = response.data.filter(
           (transaction) => transaction.shipperID === user.id && transaction.deliveryStatus === 4
         );
-        console.log('Filtered deliveries:', filteredDeliveries);
         setDeliveries(filteredDeliveries);
       } catch (error) {
         console.error('Error fetching delivery history:', error);
