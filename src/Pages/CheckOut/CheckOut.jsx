@@ -413,37 +413,67 @@ const CheckOut = () => {
     // Parse query parameters using URLSearchParams
     const params = new URLSearchParams(location.search);
     // check if there is PaymentCallBack in the Url
-    if (!params.has('partnerCode') || !params.has('orderInfo')) {
+    if (!location.pathname.includes('PaymentCallBack')) {
+      console.log('This is not the PaymentCallBack URL');
       return;
     }
 
-    // Check for essential Momo callback parameters
-    const orderId = params.get('orderId');
-    const transId = params.get('transId');
-    const errorCode = params.get('errorCode');
-    const orderInfo = params.get('orderInfo');
-    const orderType = params.get('orderType');
-    const accessKey = params.get('accessKey');
+    if (params.has('vnp_Amount')) {
+      const vnpResponseCode = params.get('vnp_ResponseCode');
+      if (vnpResponseCode !== '00') {
+        console.error('VNPay payment failed:', vnpResponseCode);
+        toast.error('There was an error processing your purchase. Please try again.', {
+          position: 'bottom-left',
+          autoClose: 5000,
+          hideProgressBar: false,
+          theme: 'colored',
+        });
+        return;
+      }
+      else {
+        // Perform any action here, such as setting state or calling a function
+        if (!hasProcessedCallbackRef.current) {
+          setSelectedPaymentMethod('VNPay');
+          setIsProcessing(true);
+          handleCreateBill();
+          hasProcessedCallbackRef.current = true;  // Prevent duplicate processing
+        }
+      }
+      // Perform any action here, such as setting state or calling a function
+    }
 
-    const CustomerRequest = orderInfo.split('\n')[0];
-    // check if the orderType is "momo_wallet" and accessKey is "F8BBA842ECF85" and CustomerRequest is `user.fName user.lName`
-    if (orderType !== 'momo_wallet' || accessKey !== 'F8BBA842ECF85' || CustomerRequest !== `Customer: ${user.fName} ${user.lName}`) {
-      console.error('Invalid Momo callback request.');
+    else if (params.has('partnerCode') || params.has('orderInfo')) {
+      // Check for essential Momo callback parameters
+      const orderId = params.get('orderId');
+      const transId = params.get('transId');
+      const errorCode = params.get('errorCode');
+      const orderInfo = params.get('orderInfo');
+      const orderType = params.get('orderType');
+      const accessKey = params.get('accessKey');
+
+      const CustomerRequest = orderInfo.split('\n')[0];
+      // check if the orderType is "momo_wallet" and accessKey is "F8BBA842ECF85" and CustomerRequest is `user.fName user.lName`
+      if (orderType !== 'momo_wallet' || accessKey !== 'F8BBA842ECF85' || CustomerRequest !== `Customer: ${user.fName} ${user.lName}`) {
+        console.error('Invalid Momo callback request.');
+        return;
+      }
+
+      // Proceed only if orderId and transId are present and there's no error
+      if (orderId && transId && !hasProcessedCallbackRef.current) {
+        console.log('Momo callback detected:', { orderId, transId });
+        setSelectedPaymentMethod('Momo');
+        handleMomoPaymentSuccess({ orderId, transId });
+        hasProcessedCallbackRef.current = true;  // Prevent duplicate processing
+      }
+    }
+
+    else {
       return;
     }
-
-    // Proceed only if orderId and transId are present and there's no error
-    if (orderId && transId && !hasProcessedCallbackRef.current) {
-      console.log('Momo callback detected:', { orderId, transId });
-      setSelectedPaymentMethod('Momo');
-      handleMomoPaymentSuccess({ orderId, transId });
-      hasProcessedCallbackRef.current = true;  // Prevent duplicate processing
-    }
+    
   }, [location.search, user.fName, user.lName]);
 
-  const handleMomoPaymentSuccess = async ({ orderId, transId }) => {
-    setIsProcessing(true);
-
+  const handleCreateBill = async () => {
     try {
       if (!user || user.role !== 'Customer') {
         toast.error('You must be logged in to make a purchase.', {
@@ -620,6 +650,12 @@ const CheckOut = () => {
     } finally {
       setIsProcessing(false);
     }
+  };
+  
+  const handleMomoPaymentSuccess = async ({ orderId, transId }) => {
+    setIsProcessing(true);
+
+    handleCreateBill();
   };
 
   return (
