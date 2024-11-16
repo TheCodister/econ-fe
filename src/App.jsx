@@ -9,7 +9,6 @@ import ManagePromotions from "./admin/ManagePromotions";
 import ManageUsers from "./admin/ManageUsers";
 import ViewOrders from "./admin/ViewOrders";
 import "./App.css";
-import { initializeChat } from "./config/gemini";
 import { AuthProvider } from "./Context/AuthContext";
 import { CartProvider } from "./Context/CartContext";
 import {
@@ -28,9 +27,6 @@ import {
 } from "./Pages";
 
 function App() {
-  const initializeChatSession = async () => {
-    await initializeChat();
-  };
   return (
     <CartProvider>
       <AuthProvider>
@@ -43,11 +39,7 @@ function App() {
                 <Route path="/Profile" element={<Profile />} />
                 <Route path="/Category/:categoryName" element={<Category />} />
                 <Route path="/Cart" element={<Cart />} />
-                <Route
-                  path="/ChatPage"
-                  onClick={initializeChatSession()}
-                  element={<ChatPage />}
-                />
+                <Route path="/ChatPage" element={<ChatPage />} />
                 <Route path="/CheckOut" element={<CheckOut />} />
                 <Route
                   path="/Checkout/PaymentCallBack"

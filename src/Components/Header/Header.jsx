@@ -72,6 +72,9 @@ const Header = () => {
           <Link to="/" className={getNavItemClass("/")}>
             <p className="a__navbar btn btn--primary">OFFERS</p>
           </Link>
+          <Link to="/ChatPage" className={getNavItemClass("/ChatPage")}>
+            <p className="a__navbar btn btn--primary">CHAT</p>
+          </Link>
           <Link to="/Cart" className={getNavItemClass("/Cart")}>
             {state.cart.length > 0 ? (
               <StyledBadge badgeContent={state.cart.length} color="secondary">

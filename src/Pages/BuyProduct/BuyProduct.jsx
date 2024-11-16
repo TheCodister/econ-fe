@@ -1,6 +1,6 @@
 // src/Pages/BuyProduct/BuyProduct.jsx
 import axios from "axios";
-import { default as React, default as React, useEffect, useState } from "react";
+import { default as React, default as useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
