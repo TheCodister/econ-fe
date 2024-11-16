@@ -267,10 +267,10 @@ const CheckOut = () => {
             withCredentials: true,
           }
         );
-        console.log('Transaction response:', response.data);
+        // console.log('Transaction response:', response.data);
 
         const hasTransaction = response.data.new_bill && response.data.new_bill.transactionId;
-        console.log('Transaction ID:', response.data.new_bill.transactionId);
+        // console.log('Transaction ID:', response.data.new_bill.transactionId);
 
         // Apply Bill Promotion if applicable
         if (billPromotion && billPromotion.promotionId && hasTransaction) {

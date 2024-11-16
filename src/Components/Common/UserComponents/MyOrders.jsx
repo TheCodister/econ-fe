@@ -20,9 +20,10 @@ const MyOrders = () => {
 
   const fetchTransactions = async () => {
     try {
-      // For display purposes, we're fetching all transactions without customerID
+      if (!user && user.id) return;
+
       const response = await axios.get(
-        `${import.meta.env.VITE_REACT_APP_API_URL}/transactions`,
+        `${import.meta.env.VITE_REACT_APP_API_URL}/transactions/customer/${user.id}`,
         {
           headers: { "Content-Type": "application/json" },
           withCredentials: true,

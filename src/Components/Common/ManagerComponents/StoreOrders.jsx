@@ -86,7 +86,12 @@ const StoreOrders = () => {
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom
+        sx={{
+          fontWeight: "900",
+          fontFamily: "Quicksand",
+        }}
+      >
         Store Orders
       </Typography>
       <TableContainer component={Paper}>

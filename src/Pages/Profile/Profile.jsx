@@ -218,7 +218,7 @@ const Profile = () => {
               {activeComponent === "Dashboard" && <Dashboard />}
               {activeComponent === "Restock" && <Restock />}
               {activeComponent === "CreateProduct" && <CreateProduct />}
-              {activeComponent === "CreatePromotion" && <CreatePromotion />}
+              {/* {activeComponent === "CreatePromotion" && <CreatePromotion />} */}
               {activeComponent === "StoreOrders" && <StoreOrders />}
             </div>
           </div>

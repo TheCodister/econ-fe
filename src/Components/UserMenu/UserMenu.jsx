@@ -73,7 +73,7 @@ const UserMenu = ({ username, onMenuClick, mode }) => {
             <li><span onClick={() => onMenuClick("CreateProduct")}>Create New Product</span></li>
             <li><span onClick={() => onMenuClick("Restock")}>Restock</span></li>
             <li><span onClick={() => onMenuClick("StoreOrders")}>View All Orders</span></li>
-            <li><span onClick={() => onMenuClick("CreatePromotion")}>Create Promotion</span></li>
+            {/* <li><span onClick={() => onMenuClick("CreatePromotion")}>Create Promotion</span></li> */}
             <li><span onClick={handleClickOpen}>Logout</span></li>
           </ul>
         )}
