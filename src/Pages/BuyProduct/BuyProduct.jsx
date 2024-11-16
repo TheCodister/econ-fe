@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
-import { Header, Footer } from "../../Components";
-import { useCart } from '../../Context/CartContext';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import axios from "axios";
+import React, { useEffect, useState } from "react";
+import { Link, useParams } from "react-router-dom";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import { Footer, Header } from "../../Components";
+import { useCart } from "../../context/CartContext";
 import "./BuyProduct.scss";
 
 const BuyProduct = () => {
@@ -14,67 +14,82 @@ const BuyProduct = () => {
   const [quantity, setQuantity] = useState(1); // Default quantity is 1
   const [promotions, setPromotions] = useState([]);
   const [totalDiscount, setTotalDiscount] = useState(0);
-  const [ store, setStore ] = useState();
+  const [store, setStore] = useState();
   const { state, dispatch } = useCart();
-  const [buttonClass, setButtonClass] = useState('');
+  const [buttonClass, setButtonClass] = useState("");
 
   const defaultImages = [
-    '/Images/no-image.jpg',
-    '/Images/no-image.jpg',
-    '/Images/no-image.jpg',
-    '/Images/no-image.jpg'
+    "/Images/no-image.jpg",
+    "/Images/no-image.jpg",
+    "/Images/no-image.jpg",
+    "/Images/no-image.jpg",
   ];
 
-  const [selectedImage, setSelectedImage] = useState(defaultImages[0]); 
+  const [selectedImage, setSelectedImage] = useState(defaultImages[0]);
 
   useEffect(() => {
     // Fetch product details based on the productId
-    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/${productId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
+    axios
+      .get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/${productId}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
       .then((response) => {
-        console.log('Fetched Data:', response.data);
+        console.log("Fetched Data:", response.data);
         return response.data;
       })
       .then((data) => {
-        console.log('Fetched Data:', data);
+        console.log("Fetched Data:", data);
         setProduct(data);
       })
-      .catch((error) => console.error(`Error fetching product ${productId} data:`, error));
+      .catch((error) =>
+        console.error(`Error fetching product ${productId} data:`, error)
+      );
 
-      // Fetch additional information: number at store based on the productId
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/productatstore/${productId}/${storeId}`, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+    // Fetch additional information: number at store based on the productId
+    axios
+      .get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/products/productatstore/${productId}/${storeId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((response) => {
+        console.log("Fetched Data:", response.data);
+        return response.data;
       })
-        .then((response) => {
-          console.log('Fetched Data:', response.data);
-          return response.data;
-        })
-        .then((data) => {
-          console.log('Fetched Data:', data);
-          setproductAtStore(data);
-        })
-        .catch((error) => console.error(`Error fetching product ${productId} data:`, error));
+      .then((data) => {
+        console.log("Fetched Data:", data);
+        setproductAtStore(data);
+      })
+      .catch((error) =>
+        console.error(`Error fetching product ${productId} data:`, error)
+      );
   }, [productId]);
 
   // Fetch additional information: promotion based on the productId
   useEffect(() => {
     const fetchPromotionInfo = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/promotionfromproduct/${productId}`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_API_URL}/products/promotionfromproduct/${productId}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
         const promotionInfo = response.data;
         setPromotions(promotionInfo);
         setTotalDiscount(calculateTotalDiscount(promotionInfo));
       } catch (error) {
-        console.error(`Error fetching promotion info for product ${product.ProductID}:`, error);
+        console.error(
+          `Error fetching promotion info for product ${product.ProductID}:`,
+          error
+        );
       }
     };
 
@@ -82,27 +97,30 @@ const BuyProduct = () => {
   }, [productId]);
 
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/store/${storeId}`, {
+    axios
+      .get(`${import.meta.env.VITE_REACT_APP_API_URL}/store/${storeId}`, {
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
       })
-        .then((response) => {
-          console.log('Fetched Data:', response.data);
-          return response.data;
-        })
-        .then((data) => {
-          console.log('Fetched Data:', data);
-          setStore(data);
-        })
-        .catch((error) => console.error(`Error fetching store ${storeId} data:`, error));
-    }, [storeId]);
+      .then((response) => {
+        console.log("Fetched Data:", response.data);
+        return response.data;
+      })
+      .then((data) => {
+        console.log("Fetched Data:", data);
+        setStore(data);
+      })
+      .catch((error) =>
+        console.error(`Error fetching store ${storeId} data:`, error)
+      );
+  }, [storeId]);
 
   function getCookie(cookieName) {
     const name = cookieName + "=";
     const decodedCookie = decodeURIComponent(document.cookie);
-    const cookieArray = decodedCookie.split(';');
-  
+    const cookieArray = decodedCookie.split(";");
+
     for (let i = 0; i < cookieArray.length; i++) {
       let cookie = cookieArray[i].trim();
       if (cookie.indexOf(name) === 0) {
@@ -110,13 +128,16 @@ const BuyProduct = () => {
       }
     }
     return null;
-  };    
+  }
 
   const calculateTotalDiscount = (promotions) => {
     if (!promotions || promotions.length === 0) {
       return 0; // No discounts
     }
-    const totalDiscount = promotions.reduce((total, promotion) => total + promotion.Discount, 0);
+    const totalDiscount = promotions.reduce(
+      (total, promotion) => total + promotion.Discount,
+      0
+    );
     // Ensure the total discount does not exceed 0.99
     return Math.min(totalDiscount, 0.99);
   };
@@ -129,10 +150,10 @@ const BuyProduct = () => {
 
   const handleAddToCart = () => {
     // Handle button class changes
-    if (!getCookie('userID')) {
+    if (!getCookie("userID")) {
       console.error("Error: User is not logged in.");
 
-      toast.error('Log in to add items to your cart!', {
+      toast.error("Log in to add items to your cart!", {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
@@ -146,32 +167,39 @@ const BuyProduct = () => {
       return; // Prevent adding to cart if user is not logged in
     }
 
-    setButtonClass('onclic');
+    setButtonClass("onclic");
     setTimeout(() => {
-      setButtonClass('validate');
+      setButtonClass("validate");
       setTimeout(() => {
-        setButtonClass('');
+        setButtonClass("");
       }, 1250);
     }, 2250);
 
     // Check if the product already exists in the cart
     const existingCartItem = state.cart.find(
-      (item) => item.ProductID === product.ProductID && item.StoreID === productAtStore.StoreID
+      (item) =>
+        item.ProductID === product.ProductID &&
+        item.StoreID === productAtStore.StoreID
     );
-  
+
     if (existingCartItem) {
       // If the product exists, calculate the new quantity
       const newQuantity = existingCartItem.Quantity + quantity;
-  
+
       // Check if the new quantity exceeds the available stock
       if (newQuantity > productAtStore.NumberAtStore) {
         console.error("Error: Quantity exceeds available stock.");
         return; // Prevent adding to cart if quantity exceeds stock
       }
-  
+
       // Update the quantity of the existing item in the cart
-      dispatch({ type: 'UPDATE_CART_ITEM', payload: { ...existingCartItem, Quantity: newQuantity } });
-      console.log(`Updated quantity of ${product.PName} in the cart: ${newQuantity}`);
+      dispatch({
+        type: "UPDATE_CART_ITEM",
+        payload: { ...existingCartItem, Quantity: newQuantity },
+      });
+      console.log(
+        `Updated quantity of ${product.PName} in the cart: ${newQuantity}`
+      );
       setQuantity(1); // Reset the quantity to 1 after adding to cart
 
       toast.success(`Updated quantity of ${product.PName} successfully!`, {
@@ -184,7 +212,6 @@ const BuyProduct = () => {
         progress: undefined,
         theme: "colored",
       });
-
     } else {
       // If the product does not exist, add it to the cart
       const purchaseInfo = {
@@ -195,12 +222,12 @@ const BuyProduct = () => {
         StoreID: productAtStore.StoreID,
         StoreName: store.Name,
         Promotion: promotions,
-        TotalDiscount: totalDiscount
+        TotalDiscount: totalDiscount,
         // Add other relevant info
       };
-  
+
       // Add the new item to the cart
-      dispatch({ type: 'ADD_TO_CART', payload: purchaseInfo });
+      dispatch({ type: "ADD_TO_CART", payload: purchaseInfo });
       console.log(`Added ${quantity} ${product.PName} to the cart.`);
       setQuantity(1); // Reset the quantity to 1 after adding to cart
 
@@ -215,7 +242,7 @@ const BuyProduct = () => {
         theme: "colored",
       });
     }
-  };  
+  };
 
   return (
     <div className="buy-product">
@@ -225,7 +252,11 @@ const BuyProduct = () => {
           <>
             <div className="product-image-section">
               {/* Main Product Image */}
-              <img src={selectedImage} alt={product.PName} className="product-image" />
+              <img
+                src={selectedImage}
+                alt={product.PName}
+                className="product-image"
+              />
 
               {/* Thumbnail Images */}
               <div className="product-thumbnails">
@@ -240,36 +271,50 @@ const BuyProduct = () => {
                 ))}
               </div>
             </div>
-            <div className='product-info-section'>
+            <div className="product-info-section">
               <Link to={`/Category/${product.Category}`}>
-                <p className='product-category'>{product.Category}</p>
+                <p className="product-category">{product.Category}</p>
               </Link>
               <h2 className="product-name">{product.PName}</h2>
-              <div className='info'>
+              <div className="info">
                 <div className="product-info">
                   <div className="">
                     {/* Use Link to navigate to the Store page with productId */}
-                    <Link className='product-category' to={`/Store/${productAtStore.StoreID}`}>
+                    <Link
+                      className="product-category"
+                      to={`/Store/${productAtStore.StoreID}`}
+                    >
                       {store?.Name && <p>{store.Name}</p>}
                     </Link>
-                  {/* Add more details as needed */}
+                    {/* Add more details as needed */}
                   </div>
                   {/* <p>Category: {product.Category}</p> */}
                   <p className="product-description">{product.Description}</p>
                   {promotions && promotions.length > 0 ? (
                     <>
-                      <p className="promo-product-price_2">${product.Price.toFixed(2)}</p>
-                      <p className="product__disscount_num">{totalDiscount.toFixed(2) * 100}% off</p>
-                      <p className="promo-product-discount_2">${(product.Price * (1 - totalDiscount)).toFixed(2)}</p>
+                      <p className="promo-product-price_2">
+                        ${product.Price.toFixed(2)}
+                      </p>
+                      <p className="product__disscount_num">
+                        {totalDiscount.toFixed(2) * 100}% off
+                      </p>
+                      <p className="promo-product-discount_2">
+                        ${(product.Price * (1 - totalDiscount)).toFixed(2)}
+                      </p>
                     </>
                   ) : (
                     <>
-                      <p className="product-card-price">${product.Price.toFixed(2)}</p>
+                      <p className="product-card-price">
+                        ${product.Price.toFixed(2)}
+                      </p>
                     </>
                   )}
-                  <div className='product-at-store'>
+                  <div className="product-at-store">
                     <p>Stock: </p>
-                    <p className='aeon_pink'> {productAtStore.NumberAtStore} Items In Stock</p>
+                    <p className="aeon_pink">
+                      {" "}
+                      {productAtStore.NumberAtStore} Items In Stock
+                    </p>
                   </div>
                 </div>
 
@@ -282,7 +327,7 @@ const BuyProduct = () => {
                 </div> */}
               </div>
               {/* Quantity Input */}
-              <div className=''>
+              <div className="">
                 <div className="quantity-input">
                   <label htmlFor="quantity"></label>
                   <input
@@ -296,11 +341,10 @@ const BuyProduct = () => {
                 </div>
                 {/* Add to Cart Button */}
                 <button
-                  id='add-to-cart-button'
+                  id="add-to-cart-button"
                   className={`add-to-cart ${buttonClass}`}
                   onClick={handleAddToCart}
-                >
-                </button>
+                ></button>
               </div>
             </div>
           </>

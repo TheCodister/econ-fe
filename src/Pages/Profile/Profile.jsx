@@ -1,23 +1,29 @@
+import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Header, Footer, UserMenu } from "../../Components";
-import "./Profile.scss";
-import MyAccount from "../../Components/Common/UserComponents/MyAccount";
-import MyOrders from "../../Components/Common/UserComponents/MyOrders";
-import Promotions from "../../Components/Common/UserComponents/Promotions";
-import Restock from "../../Components/Common/ManagerComponents/Restock";
+import { Footer, Header, UserMenu } from "../../Components";
 import CreateProduct from "../../Components/Common/ManagerComponents/CreateProduct";
 import CreatePromotion from "../../Components/Common/ManagerComponents/CreatePromotion";
 import Dashboard from "../../Components/Common/ManagerComponents/Dashboard";
+import Restock from "../../Components/Common/ManagerComponents/Restock";
 import StoreOrders from "../../Components/Common/ManagerComponents/StoreOrders";
 import AccountDetails from "../../Components/Common/UserComponents/AccountDetail";
-import axios, { AxiosError } from "axios";
+import MyAccount from "../../Components/Common/UserComponents/MyAccount";
+import MyOrders from "../../Components/Common/UserComponents/MyOrders";
+import Promotions from "../../Components/Common/UserComponents/Promotions";
+import "./Profile.scss";
 
-import { Modal, IconButton, Box, Typography, Button, Badge } from '@mui/material';
-import { useTheme } from '@mui/material/styles';
-import { keyframes, padding } from '@mui/system';
-import CasinoIcon from '@mui/icons-material/Casino'; // Icon for the floating button
-import { Wheel } from 'react-custom-roulette';
+import CasinoIcon from "@mui/icons-material/Casino"; // Icon for the floating button
+import {
+  Badge,
+  Box,
+  Button,
+  IconButton,
+  Modal,
+  Typography,
+} from "@mui/material";
+import { keyframes } from "@mui/system";
+import { Wheel } from "react-custom-roulette";
 
 // Define the pulse animation
 const pulse = keyframes`
@@ -34,7 +40,6 @@ const pulse = keyframes`
     box-shadow: 0 0 0 0 rgba(254, 59, 212, 0);
   }
 `;
-
 
 const Profile = () => {
   // Variables for customer information
@@ -55,14 +60,13 @@ const Profile = () => {
   //Cookie
   const [cookie, setcookie] = useState(false);
 
-
-  const [formData, setformData]= useState({
-    CFName:'',
-    CLName:'',
-    CAddress:'',
-    CPhone:'',
+  const [formData, setformData] = useState({
+    CFName: "",
+    CLName: "",
+    CAddress: "",
+    CPhone: "",
     CustomerID: 0,
-  })
+  });
   /* make cookie when need to get customer id*/
   const setCookie = (name, value, days) => {
     const expirationDate = new Date();
@@ -74,8 +78,8 @@ const Profile = () => {
   function getCookie(cookieName) {
     const name = cookieName + "=";
     const decodedCookie = decodeURIComponent(document.cookie);
-    const cookieArray = decodedCookie.split(';');
-  
+    const cookieArray = decodedCookie.split(";");
+
     for (let i = 0; i < cookieArray.length; i++) {
       let cookie = cookieArray[i].trim();
       if (cookie.indexOf(name) === 0) {
@@ -85,12 +89,12 @@ const Profile = () => {
     return null;
   }
 
-//   delete cookie 
-    function deleteCookie(cookieName) {
-        if (getCookie(cookieName)) {
-            document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-        }
+  //   delete cookie
+  function deleteCookie(cookieName) {
+    if (getCookie(cookieName)) {
+      document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
     }
+  }
 
   useEffect(() => {
     // This effect will be triggered whenever formData is updated
@@ -105,128 +109,142 @@ const Profile = () => {
     if (CFName === "" || CLName === "" || CAddress === "" || CPhone === "") {
       return;
     }
-  
-    if(formData.CustomerID === 0) {
-    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/lastid`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-      .then((response) => response.data)
-      .then((data) => {
-        console.log('Fetched Data:', data)
-        const newID = data + 1;
-        setformData({
-          ...formData,
-          CustomerID: newID,
-          CFName: CFName,
-          CLName: CLName,
-          CAddress: CAddress,
-          CPhone: CPhone,
-        });
-      })
-      .then(() => {
-        // Use useEffect to ensure state update is complete before calling submitsignupForm
-      })
-      .catch((error) => console.error("Error fetching data:", error));
+
+    if (formData.CustomerID === 0) {
+      axios
+        .get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/lastid`, {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+        .then((response) => response.data)
+        .then((data) => {
+          console.log("Fetched Data:", data);
+          const newID = data + 1;
+          setformData({
+            ...formData,
+            CustomerID: newID,
+            CFName: CFName,
+            CLName: CLName,
+            CAddress: CAddress,
+            CPhone: CPhone,
+          });
+        })
+        .then(() => {
+          // Use useEffect to ensure state update is complete before calling submitsignupForm
+        })
+        .catch((error) => console.error("Error fetching data:", error));
     }
   }, [CFName, CLName, CAddress, CPhone]);
 
-
-
-    const submitloginForm = async () => {
-
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/${getCookie('userID')}`, {
-      headers: {
-          "Content-Type": "application/json",
-      },
-      })
-        .then((response) => {
-          console.log('Fetched Cookie:', response.data);
-          return response.data;
-        })
-        .then((data) => {
-            console.log('Fetched Cookie:', data);
-            setCFName(data.CFName);
-            setCLName(data.CLName);
-            setCAddress(data.CAddress);
-            setCPhone(data.CPhone);
-        })
-        .catch((error) => console.error(`Error fetching ${cookie} data:`, error));
-
-    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/customer-rank/${getCookie('userID')}`,{
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-    .then((response) => {
-      console.log('Fetched Data:', response.data)
-      return response.data
-    })
-    .then((data) => {
-      console.log('Fetched Data:', data.rank);
-      setrank(data.rank);
-    })
-
-        axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/customers/shipping/${getCookie('userID')}`, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        })
-          .then((response) => {
-            console.log('Fetched Data:', response.data);
-            return response.data;
-          })
-          .then((data) => {
-            console.log('Fetched Data:', data.data);
-            settransaction(data.data);
-          })
-          .catch((error) => console.error(`Error fetching ${getCookie('userID')} data:`, error));
-        axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/promotion/`,{
+  const submitloginForm = async () => {
+    axios
+      .get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/customers/${getCookie("userID")}`,
+        {
           headers: {
             "Content-Type": "application/json",
-        },
-        })
-          .then((response) => {
-            console.log('Fetched Cookie:', response.data);
-            return response.data;
-          })
-          .then((data) => {
-            console.log('Fetched data:', data);
-            setpromotion(data);
-          })
-          .catch((error) => console.error(`Error fetching ${cookie} data:`, error));
-      }
-
-      
-  const submitmanagerLoginForm = async () => {
-      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/employees/${getCookie('managerID')}`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
+          },
+        }
+      )
+      .then((response) => {
+        console.log("Fetched Cookie:", response.data);
+        return response.data;
       })
-        .then((response) => {
-          console.log('Fetched cookie:', response.data);
-          return response.data;
-        })
-        .then((data) => {
-          console.log('Fetched cookie:', data);
-          setCFName(data.FirstName);
-          setCLName(data["LastName "]);
-          setCAddress(data["Address "]);
-        })
-        .catch((error) => console.error(`Error fetching ${cookie} data:`, error));
-    };
-  
+      .then((data) => {
+        console.log("Fetched Cookie:", data);
+        setCFName(data.CFName);
+        setCLName(data.CLName);
+        setCAddress(data.CAddress);
+        setCPhone(data.CPhone);
+      })
+      .catch((error) => console.error(`Error fetching ${cookie} data:`, error));
 
-    const [activeComponent, setActiveComponent] = useState("MyAccount");  // Default active component
+    axios
+      .get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/customers/customer-rank/${getCookie("userID")}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((response) => {
+        console.log("Fetched Data:", response.data);
+        return response.data;
+      })
+      .then((data) => {
+        console.log("Fetched Data:", data.rank);
+        setrank(data.rank);
+      });
+
+    axios
+      .get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/customers/shipping/${getCookie("userID")}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((response) => {
+        console.log("Fetched Data:", response.data);
+        return response.data;
+      })
+      .then((data) => {
+        console.log("Fetched Data:", data.data);
+        settransaction(data.data);
+      })
+      .catch((error) =>
+        console.error(`Error fetching ${getCookie("userID")} data:`, error)
+      );
+    axios
+      .get(`${import.meta.env.VITE_REACT_APP_API_URL}/promotion/`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      })
+      .then((response) => {
+        console.log("Fetched Cookie:", response.data);
+        return response.data;
+      })
+      .then((data) => {
+        console.log("Fetched data:", data);
+        setpromotion(data);
+      })
+      .catch((error) => console.error(`Error fetching ${cookie} data:`, error));
+  };
+
+  const submitmanagerLoginForm = async () => {
+    axios
+      .get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/employees/${getCookie("managerID")}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((response) => {
+        console.log("Fetched cookie:", response.data);
+        return response.data;
+      })
+      .then((data) => {
+        console.log("Fetched cookie:", data);
+        setCFName(data.FirstName);
+        setCLName(data["LastName "]);
+        setCAddress(data["Address "]);
+      })
+      .catch((error) => console.error(`Error fetching ${cookie} data:`, error));
+  };
+
+  const [activeComponent, setActiveComponent] = useState("MyAccount"); // Default active component
 
   useState(() => {
     if (getCookie("userID")) {
       submitloginForm();
       setShowuser(true);
-    }
-    else if (getCookie("managerID")) {
+    } else if (getCookie("managerID")) {
       submitmanagerLoginForm();
       setShowmanager(true);
       setActiveComponent("Dashboard");
@@ -238,12 +256,12 @@ const Profile = () => {
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeNumber, setPrizeNumber] = useState(0);
   const [wheelData, setWheelData] = useState([
-    { option: '10% OFF' },
-    { option: 'Try Again' },
-    { option: 'Free Shipping' },
-    { option: '5% OFF' },
-    { option: '20% OFF' },
-    { option: '15% OFF' },
+    { option: "10% OFF" },
+    { option: "Try Again" },
+    { option: "Free Shipping" },
+    { option: "5% OFF" },
+    { option: "20% OFF" },
+    { option: "15% OFF" },
   ]);
   const [fortuneChances, setFortuneChances] = useState(1);
 
@@ -272,27 +290,27 @@ const Profile = () => {
     alert(`Congratulations! You won ${winner}!`);
     // Handle granting the promotion to the user
     // For example, send a request to the backend
-  //   // Send the promotion to the backend
-  // axios
-  //   .post(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/apply`, {
-  //     userId: getCookie('userID'),
-  //     promotion: winner,
-  //   })
-  //   .then((response) => {
-  //     // Handle success
-  //     console.log('Promotion applied:', response.data);
-  //   })
-  //   .catch((error) => {
-  //     // Handle error
-  //     console.error('Error applying promotion:', error);
-  //   });
+    //   // Send the promotion to the backend
+    // axios
+    //   .post(`${import.meta.env.VITE_REACT_APP_API_URL}/promotions/apply`, {
+    //     userId: getCookie('userID'),
+    //     promotion: winner,
+    //   })
+    //   .then((response) => {
+    //     // Handle success
+    //     console.log('Promotion applied:', response.data);
+    //   })
+    //   .catch((error) => {
+    //     // Handle error
+    //     console.error('Error applying promotion:', error);
+    //   });
     setMustSpin(false);
     setFortuneChances(fortuneChances - 1); // Decrease chances by 1
   };
 
   // Adjust the badge position
   const badgeStyle = {
-    '& .MuiBadge-badge': {
+    "& .MuiBadge-badge": {
       left: 8,
       top: 8,
     },
@@ -307,42 +325,48 @@ const Profile = () => {
     <div className="login">
       <Header />
 
-      <div className="profile-content" >
-        {showuser &&(
-          <div className="profile-content-wrapper"> 
-            <UserMenu username={`${CFName} ${CLName}`} onMenuClick={handleMenuClick} mode="Customer" />
+      <div className="profile-content">
+        {showuser && (
+          <div className="profile-content-wrapper">
+            <UserMenu
+              username={`${CFName} ${CLName}`}
+              onMenuClick={handleMenuClick}
+              mode="Customer"
+            />
             <div className="component-container">
-                {activeComponent === "MyOrders" && <MyOrders />}
-                {activeComponent === "Promotions" && <Promotions />}
-                {activeComponent === "MyAccount" && <MyAccount />}
-                {activeComponent === "AccountDetails" && <AccountDetails />}
+              {activeComponent === "MyOrders" && <MyOrders />}
+              {activeComponent === "Promotions" && <Promotions />}
+              {activeComponent === "MyAccount" && <MyAccount />}
+              {activeComponent === "AccountDetails" && <AccountDetails />}
             </div>
           </div>
         )}
-        {showmanager&&(
-          <div className="profile-content-wrapper"> 
-            <UserMenu username={`${CFName} ${CLName}`} onMenuClick={handleMenuClick} mode="Manager" />
+        {showmanager && (
+          <div className="profile-content-wrapper">
+            <UserMenu
+              username={`${CFName} ${CLName}`}
+              onMenuClick={handleMenuClick}
+              mode="Manager"
+            />
             <div className="component-container">
-                {activeComponent === "Restock" && <Restock />}
-                {activeComponent === "CreateProduct" && <CreateProduct />}
-                {activeComponent === "CreatePromotion" && <CreatePromotion />}
-                {activeComponent === "Dashboard" && <Dashboard />}
-                {activeComponent === "StoreOrders" && <StoreOrders />}
-
+              {activeComponent === "Restock" && <Restock />}
+              {activeComponent === "CreateProduct" && <CreateProduct />}
+              {activeComponent === "CreatePromotion" && <CreatePromotion />}
+              {activeComponent === "Dashboard" && <Dashboard />}
+              {activeComponent === "StoreOrders" && <StoreOrders />}
             </div>
           </div>
-          
         )}
-        {!showuser && !showmanager &&(
-            <div>
-              <h2> Please login to view your profile</h2>
-            </div>
+        {!showuser && !showmanager && (
+          <div>
+            <h2> Please login to view your profile</h2>
+          </div>
         )}
         {/* Floating Icon */}
         {showuser && (
           <Box
             sx={{
-              position: 'fixed',
+              position: "fixed",
               bottom: 24,
               right: 24,
             }}
@@ -351,21 +375,21 @@ const Profile = () => {
               badgeContent={fortuneChances > 0 ? fortuneChances : null}
               color="secondary"
               anchorOrigin={{
-                vertical: 'top',
-                horizontal: 'left',
+                vertical: "top",
+                horizontal: "left",
               }}
               sx={badgeStyle}
             >
               <IconButton
                 onClick={handleOpenWheel}
                 sx={{
-                  backgroundColor: '#fe3bd4',
-                  color: 'white',
+                  backgroundColor: "#fe3bd4",
+                  color: "white",
                   width: 64,
                   height: 64,
                   animation: `${pulse} 4s infinite`,
-                  '&:hover': {
-                    backgroundColor: '#d81b60',
+                  "&:hover": {
+                    backgroundColor: "#d81b60",
                   },
                 }}
               >
@@ -379,17 +403,17 @@ const Profile = () => {
         <Modal open={openWheel} onClose={handleCloseWheel}>
           <Box
             sx={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              bgcolor: 'background.paper',
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              bgcolor: "background.paper",
               boxShadow: 24,
               borderRadius: 2,
               p: 4,
-              width: '90%',
-              maxWidth: '500px', // Set a maximum width for larger screens
-              textAlign: 'center', // Center-align text
+              width: "90%",
+              maxWidth: "500px", // Set a maximum width for larger screens
+              textAlign: "center", // Center-align text
             }}
           >
             <Typography
@@ -468,8 +492,6 @@ const Profile = () => {
             </Button>
           </Box>
         </Modal>
-
-
       </div>
       <Footer />
     </div>
