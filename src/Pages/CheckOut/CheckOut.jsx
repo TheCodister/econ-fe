@@ -1,5 +1,5 @@
 // src/Pages/CheckOut/CheckOut.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router-dom'; // Ensure this import is present
 import { Header, Footer, Title, CartSummary, InfoForm } from '../../Components';
@@ -67,7 +67,7 @@ const CheckOut = () => {
   const [billPromotion, setBillPromotion] = useState(null);
 
   const location = useLocation();
-  const [hasProcessedCallback, setHasProcessedCallback] = useState(false);
+  const hasProcessedCallbackRef = useRef(false);
 
   const handlePaymentMethodChange = (event) => {
     setSelectedPaymentMethod(event.target.value);
@@ -378,13 +378,13 @@ const CheckOut = () => {
     }
 
     // Proceed only if orderId and transId are present and there's no error
-    if (orderId && transId && !hasProcessedCallback) {
+    if (orderId && transId && !hasProcessedCallbackRef.current) {
       console.log('Momo callback detected:', { orderId, transId });
       setSelectedPaymentMethod('Momo');
       handleMomoPaymentSuccess({ orderId, transId });
-      setHasProcessedCallback(true); // Prevent duplicate processing
+      hasProcessedCallbackRef.current = true;  // Prevent duplicate processing
     }
-  }, [location.search, hasProcessedCallback]);
+  }, [location.search, user.fName, user.lName]);
 
   const handleMomoPaymentSuccess = async ({ orderId, transId }) => {
     setIsProcessing(true);
