@@ -46,11 +46,9 @@ const Home = () => {
         },
       })
         .then((response) => {
-          console.log('Fetched Data:', response.data);
           return response.data;
         })
         .then((data) => {
-          console.log('Fetched Data:', data);
           setStores(data);
         })
         .catch((error) => console.error(`Error fetching store data:`, error));
@@ -63,11 +61,10 @@ const Home = () => {
         },
       })
         .then((response) => {
-          console.log('Fetched Data:', response.data);
           return response.data;
         })
         .then((data) => {
-          console.log('Fetched Data:', data);
+          // console.log('Fetched Data:', data);
           const uniqueProducts = data.reduce((unique, product) => {
             if (!unique.find((p) => p.productID === product.productID)) {
               return [...unique, product];
@@ -86,11 +83,9 @@ const Home = () => {
         },
       })
         .then((response) => {
-          console.log('Fetched top product Data:', response.data);
           return response.data;
         })
         .then((data) => {
-          console.log('Fetched Data:', data);
         // Fetch product information for each product in the top5products/2023 response
         const productPromises = data.map((product) =>
           axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/product/${product.productID}`, {
@@ -112,7 +107,7 @@ const Home = () => {
               ...productsData[index],
             }));
 
-            console.log(combinedData);
+            // console.log(combinedData);
             // Set the combined data in the state
             setTopProducts(combinedData);
           })

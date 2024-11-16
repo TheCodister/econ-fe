@@ -20,11 +20,11 @@ const Store = () => {
         },
       })
         .then((response) => {
-          console.log('Fetched Data:', response.data);
+          // console.log('Fetched Data:', response.data);
           return response.data;
         })
         .then((data) => {
-          console.log('Fetched Data:', data);
+          // console.log('Fetched Data:', data);
           setProducts(data);
         })
         .catch((error) => console.error(`Error fetching store ${storeId} data:`, error));
@@ -35,11 +35,10 @@ const Store = () => {
         },
       })
         .then((response) => {
-          console.log('Fetched Data:', response.data);
           return response.data;
         })
         .then((data) => {
-          console.log('Fetched Data:', data);
+          // console.log('Fetched Data:', data);
           setStore(data);
         })
         .catch((error) => console.error(`Error fetching store ${storeId} data:`, error));

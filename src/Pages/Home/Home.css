@@ -163,18 +163,22 @@ html {
 .circlesContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 60px;
+  gap: 50px;
   justify-content: center;
   margin-top: -12vh;
   margin-bottom: 32px;
 }
 
 .circle {
-  width: 240px;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .imgRounded {
-  width: 100%;
+  width: 180px;
+  height: 180px; /* Ensure the image is square */
   object-fit: cover;
   border-radius: 50%;
   margin-bottom: 16px;
