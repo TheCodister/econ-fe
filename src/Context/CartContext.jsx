@@ -1,5 +1,4 @@
 // CartContext.js
-import PropTypes from "prop-types";
 import { createContext, useContext, useReducer } from "react";
 
 const CartContext = createContext();
@@ -16,7 +15,8 @@ const cartReducer = (state, action) => {
         ...state,
         cart: state.cart.filter((_, index) => index !== action.payload),
       };
-    case "UPDATE_CART_ITEM": {
+    case "UPDATE_CART_ITEM":
+      // eslint-disable-next-line no-case-declarations
       const updatedCart = state.cart.map((item) =>
         item.ProductID === action.payload.ProductID &&
         item.StoreID === action.payload.StoreID
@@ -27,7 +27,6 @@ const cartReducer = (state, action) => {
         ...state,
         cart: updatedCart,
       };
-    }
     case "CLEAR_CART":
       return {
         ...state,
@@ -39,6 +38,7 @@ const cartReducer = (state, action) => {
   }
 };
 
+// eslint-disable-next-line react/prop-types
 export const CartProvider = ({ children }) => {
   const [state, dispatch] = useReducer(cartReducer, { cart: [] });
 
@@ -47,9 +47,6 @@ export const CartProvider = ({ children }) => {
       {children}
     </CartContext.Provider>
   );
-};
-CartProvider.propTypes = {
-  children: PropTypes.node.isRequired,
 };
 
 export const useCart = () => {
