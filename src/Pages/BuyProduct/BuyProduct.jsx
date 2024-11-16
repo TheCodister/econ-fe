@@ -11,6 +11,7 @@ import { useAuth } from '../../hooks/useAuth'; // Import useAuth
 
 const BuyProduct = () => {
   const { productId, storeId } = useParams();
+  const [chosenStoreId, setChosenStoreId] = useState(storeId);
   const [product, setProduct] = useState(null);
   const [productAtStore, setProductAtStore] = useState(null);
   const [quantity, setQuantity] = useState(1); // Default quantity is 1
@@ -39,7 +40,7 @@ const BuyProduct = () => {
       },
     })
       .then((response) => {
-        console.log('Product Data:', response.data);
+        // console.log('Product Data:', response.data);
         setProduct(response.data);
         // Set images based on imageURL
         if (response.data.imageURL) {
@@ -64,23 +65,34 @@ const BuyProduct = () => {
     })
       .then((response) => {
         // Choose the storeId with the same storeId
-        const selectedStoreInfo = response.data.find((storeInfo) => storeInfo.storeID === storeId);
-        setProductAtStore(selectedStoreInfo);
+        if (storeId && storeId !== 'null') {
+          const selectedStoreInfo = response.data.find((storeInfo) => storeInfo.storeID === storeId);
+          setProductAtStore(selectedStoreInfo);
+        } else {
+          // Choose the storeId with the highest NumberAtStore
+          const selectedStoreInfo = response.data.reduce((prev, current) => (prev.numberAtStore > current.numberAtStore) ? prev : current);
+          setProductAtStore(selectedStoreInfo);
+          setChosenStoreId(selectedStoreInfo.storeID);
+        }
       })
       .catch((error) => console.error(`Error fetching product availability for ${productId}:`, error));
   }, [productId, storeId]);
 
   useEffect(() => {
-    axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/stores/${storeId}`, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    })
-      .then((response) => {
-        setStore(response.data);
+    // Fetch store information based on chosen storeId
+    if (!chosenStoreId || chosenStoreId === 'null') return;
+    else {
+      axios.get(`${import.meta.env.VITE_REACT_APP_API_URL}/stores/${chosenStoreId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
       })
-      .catch((error) => console.error(`Error fetching store ${storeId} data:`, error));
-  }, [storeId]);
+        .then((response) => {
+          setStore(response.data);
+        })
+        .catch((error) => console.error(`Error fetching store ${chosenStoreId} data:`, error));
+    }
+  }, [chosenStoreId]);
 
   // Function to fetch promotion information on demand
   const fetchPromotionInfo = async () => {
