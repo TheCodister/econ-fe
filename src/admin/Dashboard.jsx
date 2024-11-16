@@ -105,7 +105,15 @@ const AdminDashboard = () => {
         {/* Total Revenue */}
         <Grid item xs={12} md={4}>
           <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant='h6'>Total Revenue</Typography>
+            <Typography 
+              variant='h6'
+              sx={{
+                fontWeight: '900',
+                fontFamily: 'Quicksand',
+              }}
+            >
+              Total Revenue
+            </Typography>
             <Typography variant='h5'>${totalRevenue}</Typography>
           </Paper>
         </Grid>
@@ -113,7 +121,15 @@ const AdminDashboard = () => {
         {/* Total Transactions */}
         <Grid item xs={12} md={4}>
           <Paper elevation={3} sx={{ p: 2 }}>
-            <Typography variant='h6'>Total Transactions</Typography>
+            <Typography 
+              variant='h6'
+              sx={{
+                fontWeight: '900',
+                fontFamily: 'Quicksand',
+              }}
+            >
+              Total Transactions
+            </Typography>
             <Typography variant='h5'>{transactions.length}</Typography>
           </Paper>
         </Grid>
