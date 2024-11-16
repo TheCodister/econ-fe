@@ -15,10 +15,12 @@ import {
   DialogActions,
   Button,
 } from '@mui/material';
+import { useAuth } from '../../hooks/useAuth';
 import axios from 'axios';
 
 const OrderDetailsDialog = ({ open, onClose, transactionId }) => {
   const [transaction, setTransaction] = useState(null);
+  const { user } = useAuth();
   const [customer, setCustomer] = useState(null);
 
   useEffect(() => {
@@ -33,15 +35,20 @@ const OrderDetailsDialog = ({ open, onClose, transactionId }) => {
         );
         setTransaction(response.data);
 
-        // Fetch customer details
-        const customerResponse = await axios.get(
-          `${import.meta.env.VITE_REACT_APP_API_URL}/customers/${response.data.customerID}`,
-          {
-            headers: { 'Content-Type': 'application/json' },
-            withCredentials: true,
-          }
-        );
-        setCustomer(customerResponse.data);
+        if (user.role === "Customer") {
+          setCustomer(user);
+        }
+        else {
+          // Fetch customer details
+          const customerResponse = await axios.get(
+            `${import.meta.env.VITE_REACT_APP_API_URL}/customers/${response.data.customerID}`,
+            {
+              headers: { 'Content-Type': 'application/json' },
+              withCredentials: true,
+            }
+          ); 
+          setCustomer(customerResponse.data);
+        }
       } catch (error) {
         console.error('Error fetching transaction or customer details:', error);
       }
@@ -54,7 +61,15 @@ const OrderDetailsDialog = ({ open, onClose, transactionId }) => {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
-      <DialogTitle>Order Details</DialogTitle>
+      <DialogTitle
+        sx={{
+          fontFamily: 'Quicksand',
+          fontWeight: '900',
+          fontSize: '2rem',
+        }}
+      >
+        Order Details
+      </DialogTitle>
       <DialogContent>
         {transaction && customer ? (
           <>
@@ -111,7 +126,11 @@ const OrderDetailsDialog = ({ open, onClose, transactionId }) => {
         )}
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} variant="contained">
+        <Button onClick={onClose} variant="contained"
+          sx={{
+            backgroundColor: '#fe3bd4',
+          }}
+        >
           Close
         </Button>
       </DialogActions>
