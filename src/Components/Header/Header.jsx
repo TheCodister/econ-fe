@@ -5,6 +5,7 @@ import { useCart } from "../../Context/CartContext";
 import { useAuth } from "../../hooks/useAuth"; // Import useAuth hook
 import Badge from '@mui/material/Badge';
 import { styled } from '@mui/material/styles';
+import SearchIcon from '@mui/icons-material/Search';
 import "./Header.css";
 
 const Header = () => {
@@ -42,7 +43,9 @@ const Header = () => {
           <div className="search_body">
             <div className="search-container">
               <input type="text" className="search-input" id="searchInput" placeholder="Search..." />
-              <button className="search-button">Search</button>
+              <button className="search-button">
+                <SearchIcon />
+              </button>
             </div>
           </div>
         </div>

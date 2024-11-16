@@ -19,14 +19,10 @@ const AboutUs = () => {
                 <div className="about-us-text">
                   <h1>Welcome to IUFC</h1>
                   <p>
-                    Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                    Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-                    Duis aute irure dolor in reprehenderit in voluptate id est laborum.
+                    In the era of Industry 4.0, while technological advancements have made food delivery more accessible, they have also reduced cooking skills, especially among Vietnam’s Gen Z. Dependence on convenience foods poses health risks due to excess oil, salt, and sugar, leading to obesity and high blood pressure. Additionally, dining out is more expensive than cooking at home. Despite awareness of nutrition, many lack the time or motivation to plan and shop for healthy meals.
                   </p>
                   <p>
-                    Ius ferri velit sanctus cu, sed at soleat accusata. Dictas prompta et ut placerat legendos interpre.Donec vitae sapien ut libero venenatis faucibus.
-                    Nulla quis ante Etiam sit amet orci eget. Quis commodo odio aenean sed adipiscing. Turpis massa tincidunt dui ut ornare lectus. 
-                    Auctor elit sed vulputate mi sit amet. Duis aute irure dolor in reprehenderit in voluptate id est laborum.
+                    A Food Ingredient Shopping website can bridge this gap by offering fresh, high-quality ingredients and supporting local agriculture for fresher produce and reduced environmental impact. Meal kits, recipes, and tutorials make cooking easier and enjoyable, fostering confidence in home meal preparation. This initiative promotes healthier eating, cost savings, and stronger connections to local farmers, benefiting individuals and communities alike.
                   </p>
                 </div>
                 <div className="about-us-carousel">
