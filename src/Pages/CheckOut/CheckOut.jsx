@@ -1,6 +1,7 @@
 // src/Pages/CheckOut/CheckOut.jsx
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom'; // Ensure this import is present
 import { Header, Footer, Title, CartSummary, InfoForm } from '../../Components';
 import { useCart } from '../../Context/CartContext';
 import { useAuth } from '../../hooks/useAuth';
@@ -61,9 +62,12 @@ const CheckOut = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Credit Card');
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState('Cash');
   const [isProcessing, setIsProcessing] = useState(false);
   const [billPromotion, setBillPromotion] = useState(null);
+
+  const location = useLocation();
+  const [hasProcessedCallback, setHasProcessedCallback] = useState(false);
 
   const handlePaymentMethodChange = (event) => {
     setSelectedPaymentMethod(event.target.value);
@@ -241,6 +245,219 @@ const CheckOut = () => {
           includes: includes,
           totalPrice: totalPrice,
           totalWeight: totalWeight,
+        };
+
+        if (discountAmount > 0) {
+          transactionData.discount = parseFloat(discountAmount.toFixed(2));
+          transactionData.promotionId = state.selectedCustomerPromotion.promotionId;
+        }
+
+        if (billPromotionDiscount > 0) {
+          transactionData.billPromotionDiscount = parseFloat(billPromotionDiscount.toFixed(2));
+          transactionData.billPromotionId = billPromotion.promotionId;
+        }
+
+        const response = await axios.post(
+          `${import.meta.env.VITE_REACT_APP_API_URL}/transactions`,
+          transactionData,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            withCredentials: true,
+          }
+        );
+        console.log('Transaction response:', response.data);
+
+        const hasTransaction = response.data.new_bill && response.data.new_bill.transactionId;
+        console.log('Transaction ID:', response.data.new_bill.transactionId);
+
+        // Apply Bill Promotion if applicable
+        if (billPromotion && billPromotion.promotionId && hasTransaction) {
+          try {
+            await axios.post(
+              `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/bill/${billPromotion.promotionId}/${response.data.new_bill.transactionId}`,
+              {},
+              {
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                withCredentials: true,
+              }
+            );
+            console.log('Bill Promotion applied successfully.');
+          } catch (promoError) {
+            console.error('Error applying Bill Promotion:', promoError);
+            toast.warn('Transaction completed, but failed to apply the bill promotion.', {
+              position: 'bottom-left',
+              autoClose: 5000,
+              hideProgressBar: false,
+              theme: 'colored',
+            });
+          }
+        }
+
+        return response.data;
+      });
+
+      await Promise.all(transactionPromises);
+
+      // If a customer promotion was used, delete it
+      if (state.selectedCustomerPromotion) {
+        try {
+          const promotionId = state.selectedCustomerPromotion.promotionId;
+          const customerId = user.id;
+
+          await axios.delete(
+            `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/customer/${promotionId}/${customerId}`,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              withCredentials: true,
+            }
+          );
+
+          console.log(`Promotion ${promotionId} for customer ${customerId} has been deleted.`);
+        } catch (deleteError) {
+          console.error('Error deleting used promotion:', deleteError);
+          // Optionally, notify the user about the failure to delete the promotion
+          toast.warn('Purchase was successful, but we failed to remove the used promotion.', {
+            position: 'bottom-left',
+            autoClose: 5000,
+            hideProgressBar: false,
+            theme: 'colored',
+          });
+        }
+      }
+
+      dispatch({ type: 'CLEAR_CART' });
+
+      toast.success('Purchase successful! Thank you for your order.', {
+        position: 'bottom-left',
+        autoClose: 5000,
+        hideProgressBar: false,
+        theme: 'colored',
+      });
+
+      navigate('/');
+    } catch (error) {
+      console.error('Error while processing the purchase:', error);
+      toast.error('There was an error processing your purchase. Please try again.', {
+        position: 'bottom-left',
+        autoClose: 5000,
+        hideProgressBar: false,
+        theme: 'colored',
+      });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  useEffect(() => {
+    // Parse query parameters using URLSearchParams
+    const params = new URLSearchParams(location.search);
+    // check if there is PaymentCallBack in the Url
+    if (!params.has('partnerCode') || !params.has('orderInfo')) {
+      return;
+    }
+
+    // Check for essential Momo callback parameters
+    const orderId = params.get('orderId');
+    const transId = params.get('transId');
+    const errorCode = params.get('errorCode');
+    const orderInfo = params.get('orderInfo');
+    const orderType = params.get('orderType');
+    const accessKey = params.get('accessKey');
+
+    const CustomerRequest = orderInfo.split('\n')[0];
+    // check if the orderType is "momo_wallet" and accessKey is "F8BBA842ECF85" and CustomerRequest is `user.fName user.lName`
+    if (orderType !== 'momo_wallet' || accessKey !== 'F8BBA842ECF85' || CustomerRequest !== `Customer: ${user.fName} ${user.lName}`) {
+      console.error('Invalid Momo callback request.');
+      return;
+    }
+
+    // Proceed only if orderId and transId are present and there's no error
+    if (orderId && transId && !hasProcessedCallback) {
+      console.log('Momo callback detected:', { orderId, transId });
+      setSelectedPaymentMethod('Momo');
+      handleMomoPaymentSuccess({ orderId, transId });
+      setHasProcessedCallback(true); // Prevent duplicate processing
+    }
+  }, [location.search, hasProcessedCallback]);
+
+  const handleMomoPaymentSuccess = async ({ orderId, transId }) => {
+    setIsProcessing(true);
+
+    try {
+      if (!user || user.role !== 'Customer') {
+        toast.error('You must be logged in to make a purchase.', {
+          position: 'bottom-left',
+          autoClose: 5000,
+          hideProgressBar: false,
+          theme: 'colored',
+        });
+        setIsProcessing(false);
+        return;
+      }
+
+      // Proceed to process the transaction similar to handleBuyButtonClick
+      // Split items by store, create transactions, etc.
+
+      const itemsByStore = state.cart.reduce((result, item) => {
+        const storeID = item.storeID;
+        if (!result[storeID]) {
+          result[storeID] = [];
+        }
+        result[storeID].push(item);
+        return result;
+      }, {});
+
+      const purchaseTime = new Date().toISOString();
+
+      const transactionPromises = Object.entries(itemsByStore).map(async ([storeID, items]) => {
+        let totalPrice = 0;
+        let totalWeight = 0;
+        let discountAmount = 0;
+
+        const includes = items.map((item) => {
+          let itemTotal = item.discountedPrice * item.quantity;
+          totalWeight += item.weight * item.quantity;
+
+          if (
+            state.selectedCustomerPromotion &&
+            state.selectedCustomerPromotion.product.productId === item.productID
+          ) {
+            const promotionDiscount = itemTotal * state.selectedCustomerPromotion.discount;
+            itemTotal -= promotionDiscount;
+            discountAmount += promotionDiscount;
+          }
+
+          totalPrice += itemTotal;
+
+          return {
+            productID: item.productID,
+            numberOfProductInBill: item.quantity,
+            subTotal: itemTotal,
+          };
+        });
+
+        let billPromotionDiscount = 0;
+        if (billPromotion) {
+          billPromotionDiscount = totalPrice * billPromotion.discount;
+          totalPrice = parseFloat((totalPrice - billPromotionDiscount).toFixed(2));
+        }
+
+        const transactionData = {
+          paymentMethod: selectedPaymentMethod,
+          dateAndTime: purchaseTime,
+          customerID: user.id,
+          storeID: storeID,
+          includes: includes,
+          totalPrice: totalPrice,
+          totalWeight: totalWeight,
+          // orderId: orderId, // Include orderId from Momo callback
+          // transId: transId, // Include transId from Momo callback
         };
 
         if (discountAmount > 0) {

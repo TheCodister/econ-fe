@@ -17,7 +17,7 @@ const Promotions = () => {
       const response = await axios.get(
         `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/bill`
       );
-      console.log('Bill Promotions:', response.data);
+      // console.log('Bill Promotions:', response.data);
       setBillPromotions(response.data);
     } catch (error) {
       console.error("Error fetching bill promotions:", error);

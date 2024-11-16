@@ -27,6 +27,7 @@ function App() {
                 <Route path="/Category/:categoryName" element={<Category />} />
                 <Route path="/Cart" element={<Cart />} />
                 <Route path="/CheckOut" element={<CheckOut />} />
+                <Route path="/Checkout/PaymentCallBack" element={<CheckOut />} />
                 <Route path="/buy-product/:productId/:storeId" element={<BuyProduct />} />
                 <Route path="/store/:storeId" element={<Store />} />
                 <Route path="/AboutUs" element={<AboutUs />} />

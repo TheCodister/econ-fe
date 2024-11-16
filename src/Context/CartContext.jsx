@@ -1,5 +1,5 @@
 // src/contexts/CartContext.js
-import React, { createContext, useContext, useReducer } from 'react';
+import React, { createContext, useContext, useReducer, useEffect } from 'react';
 
 const CartContext = createContext();
 
@@ -29,7 +29,7 @@ const cartReducer = (state, action) => {
       return {
         ...state,
         cart: [],
-        selectedCustomerPromotion: null, // Clear promotion when cart is cleared
+        selectedCustomerPromotion: null,
       };
     case 'SET_CUSTOMER_PROMOTION':
       return {
@@ -46,8 +46,36 @@ const cartReducer = (state, action) => {
   }
 };
 
+// Function to load cart from localStorage
+const loadCartFromLocalStorage = () => {
+  try {
+    const serializedCart = localStorage.getItem('cart');
+    if (serializedCart === null) {
+      return { cart: [], selectedCustomerPromotion: null };
+    }
+    return JSON.parse(serializedCart);
+  } catch (e) {
+    console.error('Could not load cart from localStorage:', e);
+    return { cart: [], selectedCustomerPromotion: null };
+  }
+};
+
+// Function to save cart to localStorage
+const saveCartToLocalStorage = (state) => {
+  try {
+    const serializedCart = JSON.stringify(state);
+    localStorage.setItem('cart', serializedCart);
+  } catch (e) {
+    console.error('Could not save cart to localStorage:', e);
+  }
+};
+
 export const CartProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(cartReducer, { cart: [], selectedCustomerPromotion: null });
+  const [state, dispatch] = useReducer(cartReducer, {}, loadCartFromLocalStorage);
+
+  useEffect(() => {
+    saveCartToLocalStorage(state);
+  }, [state]);
 
   return <CartContext.Provider value={{ state, dispatch }}>{children}</CartContext.Provider>;
 };
