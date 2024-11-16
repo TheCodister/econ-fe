@@ -3,7 +3,7 @@ import axios from "axios"; // Import axios for making HTTP requests
 import React, { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { CartSummary, Footer, Header, Title } from "../../Components";
-import { useCart } from "../../context/CartContext";
+import { useCart } from "../../Context/CartContext";
 import "./Cart.css";
 import "./Style.scss";
 

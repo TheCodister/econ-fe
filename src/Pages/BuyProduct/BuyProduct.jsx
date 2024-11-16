@@ -4,7 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Footer, Header } from "../../Components";
-import { useCart } from "../../context/CartContext";
+import { useCart } from "../../Context/CartContext";
 import "./BuyProduct.scss";
 
 const BuyProduct = () => {

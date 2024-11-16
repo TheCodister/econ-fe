@@ -1,5 +1,13 @@
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
+import AdminDashboard from "./admin/Dashboard";
+import ManageInventory from "./admin/ManageInventory";
+import ManageProducts from "./admin/ManageProducts";
+import ManagePromotions from "./admin/ManagePromotions";
+import ManageUsers from "./admin/ManageUsers";
+import ViewOrders from "./admin/ViewOrders";
 import "./App.css";
+import { initializeChat } from "./config/gemini";
+import { CartProvider } from "./Context/CartContext";
 import {
   AboutUs,
   Admin,
@@ -14,14 +22,6 @@ import {
   Shipper,
   Store,
 } from "./Pages";
-import AdminDashboard from "./admin/Dashboard";
-import ManageInventory from "./admin/ManageInventory";
-import ManageProducts from "./admin/ManageProducts";
-import ManagePromotions from "./admin/ManagePromotions";
-import ManageUsers from "./admin/ManageUsers";
-import ViewOrders from "./admin/ViewOrders";
-import { initializeChat } from "./config/gemini";
-import { CartProvider } from "./context/CartContext";
 
 function App() {
   const initializeChatSession = async () => {

@@ -2,7 +2,7 @@ import Badge from "@mui/material/Badge";
 import { styled } from "@mui/material/styles";
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { useCart } from "../../context/CartContext";
+import { useCart } from "../../Context/CartContext";
 import "./Header.css";
 
 const Header = () => {
