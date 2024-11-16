@@ -1,6 +1,7 @@
 // src/Admin.jsx
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import UserLayout from '../../Components/UserLayout/UserLayout';
 import {
   Dashboard as DashboardIcon,
@@ -10,12 +11,16 @@ import {
   People as PeopleIcon,
   ShoppingBag as ShoppingBagIcon,
 } from '@mui/icons-material';
-
-
-// Custom theme with primary color #fe3bd4
+import { useAuth } from '../../hooks/useAuth';
 
 const Admin = () => {
+  const { user } = useAuth();
   const [open, setOpen] = React.useState(true);
+
+  // prevent unauthenticated users from accessing the admin page
+  if (!user || user.role !== 'Admin') {
+    return <Navigate to="/login" replace />;
+  }
 
   // Menu items for the admin sidebar
   const adminMenuItems = [
@@ -27,15 +32,12 @@ const Admin = () => {
     { text: 'Manage Users', icon: <PeopleIcon />, path: '/admin/manage-users' },
   ];
 
-  const adminName = 'Admin Name'; // Replace with dynamic name if available
-  const adminEmail = 'admin@example.com'; // Replace with dynamic name if available
-
   return (
     <UserLayout
       menuItems={adminMenuItems}
-      userName={adminName}
-      userEmail={adminEmail}
-      userInitial={adminName.charAt(0)}
+      userName={`${user.fName} ${user.lName}`}
+      userEmail={user.email}
+      userInitial={user.fName.charAt(0)}
       open={open}
       setOpen={setOpen}
     >

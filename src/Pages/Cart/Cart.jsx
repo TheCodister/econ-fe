@@ -1,179 +1,103 @@
-// Cart.jsx
-import axios from "axios"; // Import axios for making HTTP requests
-import React, { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+// src/Pages/Cart/Cart.jsx
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { CartSummary, Footer, Header, Title } from "../../Components";
+import PromotionTicket from "../../Components/Common/PromotionTicket/PromotionTicket";
 import { useCart } from "../../Context/CartContext";
+import { useAuth } from "../../hooks/useAuth"; // Import useAuth
+
+import { Typography } from "@mui/material";
+import axios from "axios"; // Import axios for making HTTP requests
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import "./Cart.css";
 import "./Style.scss";
 
 const Cart = () => {
   const { state, dispatch } = useCart();
-  const [selectedPaymentMethod, setSelectedPaymentMethod] =
-    useState("Credit Card");
-  const [billPromotion, setBillPromotion] = useState({});
-  const lastBillIdRef = useRef(500100);
+  const { user } = useAuth(); // Get user from context
+  const navigate = useNavigate(); // For navigation after purchase
+  const [customerPromotions, setCustomerPromotions] = useState([]);
+
+  const customerId = user?.role === "Customer" ? user.id : null; // Get customerId if user is a customer
+
+  useEffect(() => {
+    // Clear any selected customer promotion when entering the cart page
+    dispatch({ type: "CLEAR_CUSTOMER_PROMOTION" });
+
+    const fetchCustomerPromotions = async () => {
+      if (!customerId) return; // Return if user is not a customer
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/customer/${customerId}`
+        );
+        setCustomerPromotions(response.data);
+        console.log("Customer promotions:", response.data);
+      } catch (error) {
+        console.error("Error fetching customer promotions:", error);
+      }
+    };
+
+    fetchCustomerPromotions();
+  }, []);
 
   const handleRemoveItem = (index) => {
     dispatch({ type: "REMOVE_FROM_CART", payload: index });
   };
 
-  const calculateTotal = () => {
-    return state.cart.reduce((total, item) => {
-      return total + item.Price * (1 - item.TotalDiscount) * item.Quantity;
-    }, 0);
-  };
+  const calculateTotals = () => {
+    let subtotal = 0;
+    let discountAmount = 0;
 
-  const handlePaymentMethodChange = (event) => {
-    setSelectedPaymentMethod(event.target.value);
-  };
+    state.cart.forEach((item) => {
+      const itemTotal = item.discountedPrice * item.quantity;
+      subtotal += itemTotal;
 
-  useEffect(() => {
-    // Fetch category-specific data from JSON file based on categoryName
-    axios
-      .get(`${import.meta.env.VITE_REACT_APP_API_URL}/transaction/last`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        console.log("Fetched Data:", response.data);
-        return response.data;
-      })
-      .then((data) => {
-        console.log("Fetched Data:", data);
-        lastBillIdRef.current = data;
-      })
-      .catch((error) =>
-        console.error(`Error fetching ${categoryName} data:`, error)
-      );
-  }, []);
-
-  function getCookie(cookieName) {
-    const name = cookieName + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const cookieArray = decodedCookie.split(";");
-
-    for (let i = 0; i < cookieArray.length; i++) {
-      let cookie = cookieArray[i].trim();
-      if (cookie.indexOf(name) === 0) {
-        return cookie.substring(name.length, cookie.length);
+      // Apply promotion if it matches the product in the cart
+      if (
+        state.selectedCustomerPromotion &&
+        state.selectedCustomerPromotion.product.productId === item.productID
+      ) {
+        discountAmount += itemTotal * state.selectedCustomerPromotion.discount;
       }
-    }
-    return null;
-  }
+    });
 
-  const handleBuyButtonClick = async () => {
-    try {
-      const purchaseTime = new Date(); // Get the current time
-      // Split the cart items based on StoreID
-      const itemsByStore = state.cart.reduce((result, item) => {
-        const storeID = item.StoreID;
-        if (!result[storeID]) {
-          result[storeID] = [];
-        }
-        result[storeID].push(item);
-        return result;
-      }, {});
+    const temp_total = subtotal - discountAmount;
+    // console.log('Subtotal:', subtotal, 'Discount:', discountAmount, 'Total:', temp_total);
 
-      const newcustomerID = parseInt(getCookie("userID"), 10); // Ensure customerID is an integer
-
-      // Send each store's bill to the backend separately
-      const storePromises = Object.entries(itemsByStore).map(
-        async ([storeID, items], index) => {
-          const newstoreID = parseInt(storeID, 10); // Ensure storeID is an integer
-          let newBillId = lastBillIdRef.current + index + 1;
-          console.log(getCookie("userID"));
-          console.log(storeID);
-          console.log(purchaseTime.toISOString());
-          console.log(newBillId);
-          // Step 1: Post the bill information
-          const response = await axios.post(
-            `${import.meta.env.VITE_REACT_APP_API_URL}/transaction/`,
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-              TransactionID: newBillId,
-              CustomerID: newcustomerID,
-              // cart: items,
-              // total: calculateTotalForStore(items),
-              DateAndTime: purchaseTime.toISOString(), // Convert to ISO string for consistency
-              PaymentMethod: selectedPaymentMethod,
-              StoreID: newstoreID,
-              // Add other relevant information
-            }
-          );
-
-          // Step 2: Post the NumberOfProductinBill for each item in the bill
-          const itemPromises = items.map(async (item) => {
-            const response = await axios.post(
-              `${import.meta.env.VITE_REACT_APP_API_URL}/transaction/items/`,
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                TransactionID: newBillId,
-                ProductID: item.ProductID,
-                StoreID: newstoreID,
-                NumberOfProductInBill: item.Quantity, // Assuming quantity is the number of products in the bill
-              }
-            );
-
-            const response2 = await axios.post(
-              `${import.meta.env.VITE_REACT_APP_API_URL}/ship/order`,
-              {
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                TransactionID: newBillId,
-              }
-            );
-
-            return response.data;
-          });
-
-          // Wait for all item transactions to complete
-          const itemResponses = await Promise.all(itemPromises);
-
-          return { bill: response.data, items: itemResponses };
-        }
-      );
-
-      // Wait for all store transactions to complete
-      const storeResponses = await Promise.all(storePromises);
-
-      // Clear the cart after a successful purchase
-      dispatch({ type: "CLEAR_CART" });
-
-      // Redirect to a success or confirmation page
-    } catch (error) {
-      console.error("Error while processing the purchase:", error);
-      // Handle error scenarios, e.g., show an error message to the user
-    }
+    return { subtotal, discountAmount, temp_total };
   };
 
   const clearCart = () => {
     dispatch({ type: "CLEAR_CART" });
+    toast.info("Cart has been cleared.", {
+      position: "bottom-left",
+      autoClose: 3000,
+      hideProgressBar: false,
+      theme: "colored",
+    });
   };
 
-  // Helper function to calculate the total for a specific store
-  const calculateTotalForStore = (items) => {
-    return items.reduce((total, item) => {
-      return total + item.Price * (1 - item.TotalDiscount) * item.Quantity;
-    }, 0);
+  const handleSelectPromotion = (promotion) => {
+    if (
+      state.selectedCustomerPromotion?.promotionId === promotion.promotionId
+    ) {
+      dispatch({ type: "CLEAR_CUSTOMER_PROMOTION" });
+      return;
+    }
+    dispatch({ type: "SET_CUSTOMER_PROMOTION", payload: promotion });
   };
 
-  const subtotal = Number(calculateTotal());
-  const shipping = subtotal > 50 ? 0 : 5; // Example: Free shipping over $50
+  const { subtotal, discountAmount, temp_total } = calculateTotals();
+  // console.log('Subtotal:', subtotal, 'Discount:', discountAmount, 'Total:', temp_total);
+  const shipping = subtotal > 50 ? 0 : 0; // Example: Free shipping over $50
   const estimate = "Ho Chi Minh city"; // Example: Estimate based on the shipping address
-  const total = subtotal + shipping;
+  const total = parseFloat((temp_total + shipping).toFixed(2));
 
   return (
     <div className="cart">
       <Header />
       <div className="cart-content">
-        {/* <h1 className="cart-title">My Cart</h1> */}
         <Title titleText="My Cart" size={24} margin_b={12} />
         {state.cart.length === 0 ? (
           <div className="empty-cart">
@@ -186,9 +110,6 @@ const Cart = () => {
           </div>
         ) : (
           <div>
-            {/* <p className="cart-item-count">You have 
-              <span className="item-count-number"> {state.cart.length} </span>
-            item(s) in your cart.</p> */}
             <div className="cart-items-wrapper">
               <div className="cart-items">
                 <div className="cart-row">
@@ -201,75 +122,118 @@ const Cart = () => {
                     item(s) in your cart.
                   </p>
                   <button
-                    className="clear-cart-button"
+                    className="clear-cart-button button-89"
                     onClick={clearCart}
-                    class="button-89"
                     role="button"
                   >
                     Clear Cart
                   </button>
                 </div>
-                {/* <p className="cart-item-count">You have 
-              <span className="item-count-number"> {state.cart.length} </span>
-            item(s) in your cart.</p> */}
                 {state.cart.map((item, index) => (
                   <div key={index} className="cart-item">
+                    <div className="cart-img-wrapper">
+                      {item.imageURL ? (
+                        <img
+                          src={item.imageURL}
+                          alt={item.pName}
+                          className="cart__img"
+                        />
+                      ) : (
+                        <img
+                          src="/Images/no-image.jpg"
+                          alt={item.pName}
+                          className="cart__img"
+                        />
+                      )}
+                    </div>
                     <div className="item-details">
                       <Link
-                        to={`/buy-product/${item.ProductID}/${item.StoreID}`}
-                        key={item.ProductID}
+                        to={`/buy-product/${item.productID}/${item.storeID}`}
                         className="product-link"
                       >
-                        <p className="item-name">{item.PName}</p>
+                        <p className="item-name">{item.pName}</p>
                       </Link>
-                      <p className="item-storeid">Store: {item.StoreName}</p>
-                      {item.Promotion && item.Promotion.length > 0 ? (
+                      <p className="item-storeid">Store: {item.storeName}</p>
+                      {item.discount > 0 ? (
                         <>
                           <p className="promo-product-price">
-                            ${item.Price.toFixed(2)}
+                            ${item.price.toFixed(2)}
                           </p>
-                          <p className="cart_product__disscount_num">
-                            {item.TotalDiscount.toFixed(2) * 100}% off
-                          </p>
-                          <p className="promo-product-discount">
-                            Price: $
-                            {(item.Price * (1 - item.TotalDiscount)).toFixed(2)}
-                          </p>
+                          <div className="flex-box">
+                            <p className="promo-product-discount">
+                              Price: ${item.discountedPrice.toFixed(2)}
+                            </p>
+                            <p className="cart_product__disscount_num">
+                              {(item.discount * 100).toFixed(0)}% off
+                            </p>
+                          </div>
                         </>
                       ) : (
                         <>
                           <p className="item-price">
-                            Price: ${item.Price.toFixed(2)}
+                            Price: ${item.price.toFixed(2)}
                           </p>
                         </>
                       )}
-                      {/* Add other details as needed */}
                     </div>
-                    <p className="item-quantity">x {item.Quantity}</p>
+                    <p className="item-quantity">x {item.quantity}</p>
                     <button
-                      className="remove-item-button"
+                      className="remove-item-button x_button"
                       onClick={() => handleRemoveItem(index)}
-                      class="x_button"
-                      href="#"
                       role="button"
                     >
                       <span>remove</span>
-                      <div class="icon">
-                        <i class="fa fa-remove"></i>
+                      <div className="icon">
+                        <i className="fa fa-remove"></i>
                       </div>
                     </button>
                   </div>
                 ))}
+
+                {/* Apply Promotion */}
                 <div className="promotion-select">
-                  <h3>Apply Promotion</h3>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      mt: 2,
+                      mb: 2,
+                      fontWeight: "900",
+                      fontFamily: "Quicksand",
+                    }}
+                  >
+                    Apply Promotion
+                  </Typography>
+                  <div
+                    style={{ display: "flex", gap: "16px", flexWrap: "wrap" }}
+                  >
+                    {customerPromotions.map((promotion) => {
+                      // Check if the promotion's product is in the cart
+                      const productInCart = state.cart.find(
+                        (item) => item.productID === promotion.product.productId
+                      );
+
+                      return (
+                        <PromotionTicket
+                          key={promotion.promotionId}
+                          promotion={promotion}
+                          onSelect={handleSelectPromotion}
+                          disabled={!productInCart}
+                          selected={
+                            state.selectedCustomerPromotion?.promotionId ===
+                            promotion.promotionId
+                          }
+                        />
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
               <div className="cart-summary">
-                {/* You can display the total or other summary information here */}
                 <CartSummary
                   subtotal={subtotal}
                   shipping={shipping}
                   estimate={estimate}
+                  customerPromotion={discountAmount}
                   total={total}
                 />
               </div>

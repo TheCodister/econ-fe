@@ -1,26 +1,17 @@
+// src/Components/Header/Header.jsx
+import SearchIcon from "@mui/icons-material/Search";
 import Badge from "@mui/material/Badge";
 import { styled } from "@mui/material/styles";
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useCart } from "../../Context/CartContext";
+import { useAuth } from "../../hooks/useAuth"; // Import useAuth hook
 import "./Header.css";
 
 const Header = () => {
   const { state } = useCart();
+  const { user } = useAuth(); // Access user from useAuth
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-
-  const getCookie = (cookieName) => {
-    const name = cookieName + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const cookieArray = decodedCookie.split(";");
-    for (let i = 0; i < cookieArray.length; i++) {
-      let cookie = cookieArray[i].trim();
-      if (cookie.indexOf(name) === 0) {
-        return cookie.substring(name.length, cookie.length);
-      }
-    }
-    return null;
-  };
 
   const StyledBadge = styled(Badge)(({ theme }) => ({
     "& .MuiBadge-badge": {
@@ -32,7 +23,6 @@ const Header = () => {
   }));
 
   const location = useLocation();
-  const showProfile = getCookie("userID") || getCookie("managerID");
 
   const getNavItemClass = (pathname) => {
     return location.pathname === pathname
@@ -64,7 +54,9 @@ const Header = () => {
                 id="searchInput"
                 placeholder="Search..."
               />
-              <button className="search-button">Search</button>
+              <button className="search-button">
+                <SearchIcon />
+              </button>
             </div>
           </div>
         </div>
@@ -77,12 +69,6 @@ const Header = () => {
           <Link to="/AboutUs" className={getNavItemClass("/AboutUs")}>
             <p className="a__navbar btn btn--primary">ABOUT US</p>
           </Link>
-          <Link to="/ChatPage" className={getNavItemClass("/ChatPage")}>
-            <p className="a__navbar btn btn--primary">CHAT</p>
-          </Link>
-          {/* <a href="#" className="a__navbar btn btn--primary">
-                        <li className="nav__item">OFFERS</li>
-                    </a> */}
           <Link to="/" className={getNavItemClass("/")}>
             <p className="a__navbar btn btn--primary">OFFERS</p>
           </Link>
@@ -95,12 +81,12 @@ const Header = () => {
               <p className="a__navbar btn btn--primary">MY CART</p>
             )}
           </Link>
-          {!showProfile && (
+          {!user && (
             <Link to="/Login" className={getNavItemClass("/Login")}>
               <p className="a__navbar btn btn--primary">LOGIN</p>
             </Link>
           )}
-          {showProfile && (
+          {user && (
             <Link to="/Profile" className={getNavItemClass("/Profile")}>
               <p className="a__navbar btn btn--primary">PROFILE</p>
             </Link>

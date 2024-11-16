@@ -103,7 +103,7 @@ html {
 .hero {
   height: calc(100vh - 60px); 
   width: 100vw;
-  background: url('Images/bg_desktop.jpg'); 
+  background: url('/Images/bg_desktop.jpg'); 
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -163,18 +163,22 @@ html {
 .circlesContainer {
   display: flex;
   flex-wrap: wrap;
-  gap: 60px;
+  gap: 50px;
   justify-content: center;
   margin-top: -12vh;
   margin-bottom: 32px;
 }
 
 .circle {
-  width: 240px;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .imgRounded {
-  width: 100%;
+  width: 180px;
+  height: 180px; /* Ensure the image is square */
   object-fit: cover;
   border-radius: 50%;
   margin-bottom: 16px;
@@ -516,7 +520,7 @@ html {
       background-color: var(--main_yellow);
       color: white;
       border: none;
-      padding: 10px;
+      padding: 6px;
       border-radius: 4px;
       cursor: pointer;
     

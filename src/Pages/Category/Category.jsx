@@ -21,11 +21,10 @@ const Category = () => {
         }
       )
       .then((response) => {
-        console.log("Fetched Data:", response.data);
+        // console.log('Fetched Data:', response.data);
         return response.data;
       })
       .then((data) => {
-        console.log("Fetched Data:", data);
         setProducts(data);
       })
       .catch((error) =>

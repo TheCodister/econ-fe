@@ -6,7 +6,7 @@ const ProductList = ({ products, storeId = null, size = "default" }) => {
   return (
     <div className={`grid-products-container ${size === "small" ? "small" : ""}`}>
       {products.map((product) => (
-        <ShowProduct key={product.ProductID} product={product} storeId={storeId} />
+        <ShowProduct key={product.productID} product={product} storeId={storeId} />
       ))}
     </div>
   );

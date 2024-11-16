@@ -1,22 +1,26 @@
+// src/Pages/BuyProduct/BuyProduct.jsx
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import { default as React, default as React, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import { ToastContainer, toast } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Footer, Header } from "../../Components";
 import { useCart } from "../../Context/CartContext";
+import { useAuth } from "../../hooks/useAuth"; // Import useAuth
 import "./BuyProduct.scss";
 
 const BuyProduct = () => {
   const { productId, storeId } = useParams();
+  const [chosenStoreId, setChosenStoreId] = useState(storeId);
   const [product, setProduct] = useState(null);
-  const [productAtStore, setproductAtStore] = useState(null);
+  const [productAtStore, setProductAtStore] = useState(null);
   const [quantity, setQuantity] = useState(1); // Default quantity is 1
   const [promotions, setPromotions] = useState([]);
   const [totalDiscount, setTotalDiscount] = useState(0);
   const [store, setStore] = useState();
   const { state, dispatch } = useCart();
   const [buttonClass, setButtonClass] = useState("");
+  const { user } = useAuth(); // Get user from context
 
   const defaultImages = [
     "/Images/no-image.jpg",
@@ -25,32 +29,14 @@ const BuyProduct = () => {
     "/Images/no-image.jpg",
   ];
 
-  const [selectedImage, setSelectedImage] = useState(defaultImages[0]);
+  const [images, setImages] = useState(defaultImages);
+  const [selectedImage, setSelectedImage] = useState(images[0]);
 
   useEffect(() => {
     // Fetch product details based on the productId
     axios
-      .get(`${import.meta.env.VITE_REACT_APP_API_URL}/products/${productId}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        console.log("Fetched Data:", response.data);
-        return response.data;
-      })
-      .then((data) => {
-        console.log("Fetched Data:", data);
-        setProduct(data);
-      })
-      .catch((error) =>
-        console.error(`Error fetching product ${productId} data:`, error)
-      );
-
-    // Fetch additional information: number at store based on the productId
-    axios
       .get(
-        `${import.meta.env.VITE_REACT_APP_API_URL}/products/productatstore/${productId}/${storeId}`,
+        `${import.meta.env.VITE_REACT_APP_API_URL}/products/product/${productId}`,
         {
           headers: {
             "Content-Type": "application/json",
@@ -58,115 +44,156 @@ const BuyProduct = () => {
         }
       )
       .then((response) => {
-        console.log("Fetched Data:", response.data);
-        return response.data;
-      })
-      .then((data) => {
-        console.log("Fetched Data:", data);
-        setproductAtStore(data);
+        // console.log('Product Data:', response.data);
+        setProduct(response.data);
+        // Set images based on imageURL
+        if (response.data.imageURL) {
+          setImages(Array(4).fill(response.data.imageURL));
+          setSelectedImage(response.data.imageURL);
+        } else {
+          setImages(defaultImages);
+          setSelectedImage(defaultImages[0]);
+        }
+        // Set initial discount and discountedPrice from product data
+        if (response.data.discount && response.data.discount > 0) {
+          setTotalDiscount(response.data.discount);
+        }
       })
       .catch((error) =>
         console.error(`Error fetching product ${productId} data:`, error)
       );
-  }, [productId]);
 
-  // Fetch additional information: promotion based on the productId
+    // Fetch product availability at store
+    axios
+      .get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/products/atstore/${productId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      )
+      .then((response) => {
+        // Choose the storeId with the same storeId
+        if (storeId && storeId !== "null") {
+          const selectedStoreInfo = response.data.find(
+            (storeInfo) => storeInfo.storeID === storeId
+          );
+          setProductAtStore(selectedStoreInfo);
+        } else {
+          // Choose the storeId with the highest NumberAtStore
+          const selectedStoreInfo = response.data.reduce((prev, current) =>
+            prev.numberAtStore > current.numberAtStore ? prev : current
+          );
+          setProductAtStore(selectedStoreInfo);
+          setChosenStoreId(selectedStoreInfo.storeID);
+        }
+      })
+      .catch((error) =>
+        console.error(
+          `Error fetching product availability for ${productId}:`,
+          error
+        )
+      );
+  }, [productId, storeId]);
+
   useEffect(() => {
-    const fetchPromotionInfo = async () => {
-      try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_REACT_APP_API_URL}/products/promotionfromproduct/${productId}`,
+    // Fetch store information based on chosen storeId
+    if (!chosenStoreId || chosenStoreId === "null") return;
+    else {
+      axios
+        .get(
+          `${import.meta.env.VITE_REACT_APP_API_URL}/stores/${chosenStoreId}`,
           {
             headers: {
               "Content-Type": "application/json",
             },
           }
+        )
+        .then((response) => {
+          setStore(response.data);
+        })
+        .catch((error) =>
+          console.error(`Error fetching store ${chosenStoreId} data:`, error)
         );
-        const promotionInfo = response.data;
-        setPromotions(promotionInfo);
-        setTotalDiscount(calculateTotalDiscount(promotionInfo));
-      } catch (error) {
-        console.error(
-          `Error fetching promotion info for product ${product.ProductID}:`,
-          error
-        );
-      }
-    };
-
-    fetchPromotionInfo();
-  }, [productId]);
-
-  useEffect(() => {
-    axios
-      .get(`${import.meta.env.VITE_REACT_APP_API_URL}/store/${storeId}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        console.log("Fetched Data:", response.data);
-        return response.data;
-      })
-      .then((data) => {
-        console.log("Fetched Data:", data);
-        setStore(data);
-      })
-      .catch((error) =>
-        console.error(`Error fetching store ${storeId} data:`, error)
-      );
-  }, [storeId]);
-
-  function getCookie(cookieName) {
-    const name = cookieName + "=";
-    const decodedCookie = decodeURIComponent(document.cookie);
-    const cookieArray = decodedCookie.split(";");
-
-    for (let i = 0; i < cookieArray.length; i++) {
-      let cookie = cookieArray[i].trim();
-      if (cookie.indexOf(name) === 0) {
-        return cookie.substring(name.length, cookie.length);
-      }
     }
-    return null;
-  }
+  }, [chosenStoreId]);
+
+  // Function to fetch promotion information on demand
+  const fetchPromotionInfo = async () => {
+    if (!product) {
+      toast.error("Product information is not available.", {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        theme: "colored",
+      });
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/promotions/product/${productId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+      console.log("Promotion Data:", response.data);
+      setPromotions(response.data);
+      setTotalDiscount(calculateTotalDiscount(response.data));
+      toast.success("Promotions applied successfully!", {
+        position: "bottom-left",
+        autoClose: 3000,
+        hideProgressBar: false,
+        theme: "colored",
+      });
+    } catch (error) {
+      console.error(
+        `Error fetching promotion info for product ${productId}:`,
+        error
+      );
+      toast.error("Failed to apply promotions. Please try again later.", {
+        position: "bottom-left",
+        autoClose: 5000,
+        hideProgressBar: false,
+        theme: "colored",
+      });
+    }
+  };
 
   const calculateTotalDiscount = (promotions) => {
     if (!promotions || promotions.length === 0) {
-      return 0; // No discounts
+      return product.discount || 0; // Use product's discount if no promotions
     }
-    const totalDiscount = promotions.reduce(
+    const promotionDiscount = promotions.reduce(
       (total, promotion) => total + promotion.Discount,
       0
     );
     // Ensure the total discount does not exceed 0.99
-    return Math.min(totalDiscount, 0.99);
+    return Math.min((product.discount || 0) + promotionDiscount, 0.99);
   };
 
   const handleQuantityChange = (e) => {
     const newQuantity = parseInt(e.target.value);
-    const maxQuantity = productAtStore ? productAtStore.NumberAtStore : 1;
+    const maxQuantity = productAtStore ? productAtStore.numberAtStore : 1;
     setQuantity(newQuantity > 0 ? Math.min(newQuantity, maxQuantity) : 1);
   };
 
   const handleAddToCart = () => {
-    // Handle button class changes
-    if (!getCookie("userID")) {
-      console.error("Error: User is not logged in.");
-
+    // Check if user is authenticated and is a customer
+    if (!user || user.role !== "Customer") {
       toast.error("Log in to add items to your cart!", {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
         theme: "colored",
       });
-
-      return; // Prevent adding to cart if user is not logged in
+      return; // Prevent adding to cart if user is not a customer
     }
 
+    // Handle button class changes
     setButtonClass("onclic");
     setTimeout(() => {
       setButtonClass("validate");
@@ -178,67 +205,63 @@ const BuyProduct = () => {
     // Check if the product already exists in the cart
     const existingCartItem = state.cart.find(
       (item) =>
-        item.ProductID === product.ProductID &&
-        item.StoreID === productAtStore.StoreID
+        item.productID === product.productID &&
+        item.storeID === productAtStore.storeID
     );
 
     if (existingCartItem) {
       // If the product exists, calculate the new quantity
-      const newQuantity = existingCartItem.Quantity + quantity;
+      const newQuantity = existingCartItem.quantity + quantity;
 
       // Check if the new quantity exceeds the available stock
-      if (newQuantity > productAtStore.NumberAtStore) {
-        console.error("Error: Quantity exceeds available stock.");
+      if (newQuantity > productAtStore.numberAtStore) {
+        toast.error("Quantity exceeds available stock.", {
+          position: "bottom-left",
+          autoClose: 5000,
+          hideProgressBar: false,
+          theme: "colored",
+        });
         return; // Prevent adding to cart if quantity exceeds stock
       }
 
       // Update the quantity of the existing item in the cart
       dispatch({
         type: "UPDATE_CART_ITEM",
-        payload: { ...existingCartItem, Quantity: newQuantity },
+        payload: { ...existingCartItem, quantity: newQuantity },
       });
-      console.log(
-        `Updated quantity of ${product.PName} in the cart: ${newQuantity}`
-      );
       setQuantity(1); // Reset the quantity to 1 after adding to cart
 
-      toast.success(`Updated quantity of ${product.PName} successfully!`, {
+      toast.success(`Updated quantity of ${product.pName} successfully!`, {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
         theme: "colored",
       });
+      console.log(state);
     } else {
       // If the product does not exist, add it to the cart
       const purchaseInfo = {
-        ProductID: product.ProductID,
-        PName: product.PName,
-        Quantity: quantity,
-        Price: product.Price,
-        StoreID: productAtStore.StoreID,
-        StoreName: store.Name,
-        Promotion: promotions,
-        TotalDiscount: totalDiscount,
+        productID: product.productID,
+        pName: product.pName,
+        quantity: quantity,
+        price: product.price,
+        storeID: productAtStore.storeID,
+        storeName: store.name,
+        discount: product.discount || 0,
+        discountedPrice: product.discountedPrice || product.price,
+        weight: product.weight || 0,
+        imageURL: product.imageURL || "/Images/no-image.jpg",
         // Add other relevant info
       };
 
       // Add the new item to the cart
       dispatch({ type: "ADD_TO_CART", payload: purchaseInfo });
-      console.log(`Added ${quantity} ${product.PName} to the cart.`);
       setQuantity(1); // Reset the quantity to 1 after adding to cart
 
-      toast.success(`Added ${quantity} ${product.PName} to the cart.`, {
+      toast.success(`Added ${quantity} ${product.pName} to the cart.`, {
         position: "bottom-left",
         autoClose: 5000,
         hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        progress: undefined,
         theme: "colored",
       });
     }
@@ -252,82 +275,79 @@ const BuyProduct = () => {
           <>
             <div className="product-image-section">
               {/* Main Product Image */}
-              <img
-                src={selectedImage}
-                alt={product.PName}
-                className="product-image"
-              />
+              <div className="main-image-container">
+                <img
+                  src={selectedImage}
+                  alt={product.pName}
+                  className="product-image"
+                />
+              </div>
 
               {/* Thumbnail Images */}
               <div className="product-thumbnails">
-                {defaultImages.map((img, index) => (
-                  <img
-                    key={index}
-                    src={img}
-                    alt={`Thumbnail ${index + 1}`}
-                    className="thumbnail-image"
-                    onClick={() => setSelectedImage(img)}
-                  />
+                {images.map((img, index) => (
+                  <div key={index} className="thumbnail-container">
+                    <img
+                      src={img}
+                      alt={`Thumbnail ${index + 1}`}
+                      className="thumbnail-image"
+                      onError={(e) => {
+                        e.target.src = "/Images/no-image.jpg";
+                      }}
+                      onClick={() => setSelectedImage(img)}
+                    />
+                  </div>
                 ))}
               </div>
             </div>
             <div className="product-info-section">
-              <Link to={`/Category/${product.Category}`}>
-                <p className="product-category">{product.Category}</p>
+              <Link to={`/Category/${product.category}`}>
+                <p className="product-category">{product.category}</p>
               </Link>
-              <h2 className="product-name">{product.PName}</h2>
+              <h2 className="product-name">{product.pName}</h2>
               <div className="info">
                 <div className="product-info">
-                  <div className="">
-                    {/* Use Link to navigate to the Store page with productId */}
-                    <Link
-                      className="product-category"
-                      to={`/Store/${productAtStore.StoreID}`}
-                    >
-                      {store?.Name && <p>{store.Name}</p>}
-                    </Link>
-                    {/* Add more details as needed */}
-                  </div>
-                  {/* <p>Category: {product.Category}</p> */}
-                  <p className="product-description">{product.Description}</p>
-                  {promotions && promotions.length > 0 ? (
+                  {/* Use Link to navigate to the Store page with storeId */}
+                  <Link
+                    className="product-category"
+                    to={`/Store/${productAtStore.storeID}`}
+                  >
+                    {store?.name && <p>{store.name}</p>}
+                  </Link>
+                  <p className="product-description">{product.description}</p>
+                  {product.discount && product.discount > 0 ? (
                     <>
                       <p className="promo-product-price_2">
-                        ${product.Price.toFixed(2)}
+                        ${product.price.toFixed(2)}
                       </p>
                       <p className="product__disscount_num">
-                        {totalDiscount.toFixed(2) * 100}% off
+                        {(totalDiscount * 100).toFixed(0)}% off
                       </p>
                       <p className="promo-product-discount_2">
-                        ${(product.Price * (1 - totalDiscount)).toFixed(2)}
+                        ${product.discountedPrice.toFixed(2)}
                       </p>
                     </>
                   ) : (
                     <>
                       <p className="product-card-price">
-                        ${product.Price.toFixed(2)}
+                        ${product.price.toFixed(2)}
                       </p>
                     </>
                   )}
+                  <p className="product-description">
+                    Weight: {product.weight}g
+                  </p>
                   <div className="product-at-store">
                     <p>Stock: </p>
                     <p className="aeon_pink">
                       {" "}
-                      {productAtStore.NumberAtStore} Items In Stock
+                      {productAtStore.numberAtStore} Items In Stock
                     </p>
                   </div>
                 </div>
-
-                {/* Add more details as needed */}
-                {/* Additional Information */}
-                {/* <div className="provider">
-                  <Link to={`/Store/${productAtStore.StoreID}`}>
-                    {store?.Name && <p>Store: {store.Name}</p>}
-                  </Link>
-                </div> */}
               </div>
               {/* Quantity Input */}
-              <div className="">
+              <div className="quantity-section">
                 <div className="quantity-input">
                   <label htmlFor="quantity"></label>
                   <input
@@ -346,24 +366,20 @@ const BuyProduct = () => {
                   onClick={handleAddToCart}
                 ></button>
               </div>
+              {/* Optional: Button to Fetch Promotions
+              {product.discount === 0 && (
+                <div className="fetch-promotion">
+                  <button onClick={fetchPromotionInfo} className="apply-promotion-button">
+                    Apply Promotions
+                  </button>
+                </div>
+              )} */}
             </div>
           </>
         ) : (
           <p>Loading...</p>
         )}
       </div>
-      <ToastContainer
-        position="bottom-left"
-        autoClose={5000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-        theme="colored"
-      />
       <Footer />
     </div>
   );

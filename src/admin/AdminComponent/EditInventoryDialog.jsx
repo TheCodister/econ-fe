@@ -1,5 +1,5 @@
 // src/admin/EditInventoryDialog.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -12,8 +12,17 @@ import {
 const EditInventoryDialog = ({ open, handleClose, handleSave, record }) => {
   const [quantity, setQuantity] = useState(0);
 
+  useEffect(() => {
+    if (record) {
+      setQuantity(record.numberAtStore);
+    }
+  }, [record]);
+
   const onSave = () => {
-    const updatedRecord = { ...record, numberAtStore: parseInt(quantity, 10) };
+    const updatedRecord = {
+      ...record,
+      numberAtStore: parseInt(quantity, 10),
+    };
     handleSave(updatedRecord);
     handleClose();
   };
@@ -25,14 +34,14 @@ const EditInventoryDialog = ({ open, handleClose, handleSave, record }) => {
         <TextField
           margin="dense"
           label="Product Name"
-          value={""}
+          value={record?.product?.pName || ''}
           fullWidth
           disabled
         />
         <TextField
           margin="dense"
           label="Store Name"
-          value={"record.storeName"}
+          value={record?.storeName || ''}
           fullWidth
           disabled
         />
@@ -48,7 +57,11 @@ const EditInventoryDialog = ({ open, handleClose, handleSave, record }) => {
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Cancel</Button>
-        <Button onClick={onSave} variant="contained">
+        <Button
+          onClick={onSave}
+          variant="contained"
+          disabled={!quantity || quantity < 0}
+        >
           Save
         </Button>
       </DialogActions>

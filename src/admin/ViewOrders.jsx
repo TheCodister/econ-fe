@@ -1,6 +1,7 @@
 // src/admin/ViewOrders.jsx
-import React, { useState, useEffect } from 'react';
-import OrderDetailsDialog from './AdminComponent/OrderDetailsDialog';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
+import OrderDetailsDialog from "./AdminComponent/OrderDetailsDialog";
 import {
   Box,
   Typography,
@@ -11,167 +12,227 @@ import {
   TableCell,
   TableContainer,
   Paper,
-  IconButton,
   Button,
+  Snackbar,
+  Alert,
+  FormControl,
   Select,
   MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
-import {
-  Visibility as VisibilityIcon,
-  Edit as EditIcon,
-} from '@mui/icons-material';
-
-const deliveryStatuses = [
-  'Pending',
-  'Prepared',
-  'Accepted',
-  'OnDelivery',
-  'Delivered',
-];
+  TablePagination, // Import TablePagination
+} from "@mui/material";
 
 const ViewOrders = () => {
-  const [orders, setOrders] = useState([]);
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [filterStatus, setFilterStatus] = useState('');
+  const [transactions, setTransactions] = useState([]);
+  const [snackbar, setSnackbar] = useState({
+    open: false,
+    message: "",
+    severity: "success",
+  });
+  const [filterStatus, setFilterStatus] = useState("");
+  const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
+  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+
+  const deliveryStatuses = [
+    { value: 0, label: "Pending" },
+    { value: 1, label: "Prepared" },
+    { value: 2, label: "Accepted" },
+    { value: 3, label: "On Delivery" },
+    { value: 4, label: "Delivered" },
+  ];
 
   useEffect(() => {
-    fetchOrders();
-  }, [filterStatus]);
+    fetchTransactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterStatus]); // Removed fetchTransactions from dependencies
 
-  const fetchOrders = () => {
-    // Fetch orders from the backend API
-    // Replace '/api/orders' with your actual API endpoint
-    let endpoint = '/api/orders';
-    if (filterStatus) {
-      endpoint += `?status=${filterStatus}`;
+  const fetchTransactions = async () => {
+    try {
+      let endpoint = `${import.meta.env.VITE_REACT_APP_API_URL}/transactions`;
+      if (filterStatus !== "") {
+        endpoint += `?status=${Number(filterStatus)}`; // Ensure status is a number
+      }
+      const response = await axios.get(endpoint, {
+        headers: { "Content-Type": "application/json" },
+        withCredentials: true,
+      });
+      // Sort transactions by dateAndTime in descending order
+      const sortedTransactions = response.data.sort(
+        (a, b) => new Date(b.dateAndTime) - new Date(a.dateAndTime)
+      );
+      setTransactions(sortedTransactions);
+    } catch (error) {
+      console.error("Error fetching transactions:", error);
+      setSnackbar({
+        open: true,
+        message: "Failed to fetch transactions.",
+        severity: "error",
+      });
     }
-    fetch(endpoint)
-      .then((response) => response.json())
-      .then((data) => setOrders(data))
-      .catch((error) => console.error('Error fetching orders:', error));
   };
 
-  const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState(null);
-
-  const handleViewOrder = (orderId) => {
-    setSelectedOrderId(orderId);
+  const handleViewOrder = (transactionId) => {
+    setSelectedTransactionId(transactionId);
     setOpenDetailsDialog(true);
   };
 
-  const handleStatusChange = (orderId, newStatus) => {
-    // Update the delivery status of the order
-    fetch(`/api/orders/${orderId}/status`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deliveryStatus: newStatus }),
-    })
-      .then((response) => {
-        if (response.ok) {
-          // Update the orders state to reflect the change
-          setOrders(
-            orders.map((order) =>
-              order.id === orderId ? { ...order, deliveryStatus: newStatus } : order
-            )
-          );
-        } else {
-          console.error('Failed to update status');
-        }
-      })
-      .catch((error) => console.error('Error updating status:', error));
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
   };
+
+  const getStatusText = (status) => {
+    const statusObj = deliveryStatuses.find((item) => item.value === status);
+    return statusObj ? statusObj.label : "Unknown";
+  };
+
+  const handleStatusChange = (e) => {
+    const value = e.target.value;
+    setFilterStatus(value === "" ? "" : Number(value)); // Convert to number
+    setPage(0); // Reset to first page when filter changes
+  };
+
+  // Handle pagination
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to first page
+  };
+
+  // Transactions to display on the current page
+  const displayedTransactions = transactions.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          fontWeight: 900,
+          fontFamily: "Quicksand, sans-serif",
+          color: "#fe3bd4",
+        }}
+      >
         View Orders
       </Typography>
       <FormControl sx={{ mb: 2, minWidth: 200 }}>
-        <InputLabel>Filter by Status</InputLabel>
         <Select
           value={filterStatus}
-          label="Filter by Status"
-          onChange={(e) => setFilterStatus(e.target.value)}
+          displayEmpty
+          onChange={handleStatusChange}
         >
           <MenuItem value="">
-            <em>All</em>
+            <em>All Statuses</em>
           </MenuItem>
           {deliveryStatuses.map((status) => (
-            <MenuItem key={status} value={status}>
-              {status}
+            <MenuItem key={status.value} value={status.value}>
+              {status.label}
             </MenuItem>
           ))}
         </Select>
       </FormControl>
       <TableContainer component={Paper}>
-        <Table aria-label="orders table">
+        <Table aria-label="transactions table">
           <TableHead>
             <TableRow>
-              <TableCell>Order ID</TableCell>
-              <TableCell>Customer</TableCell>
-              <TableCell>Store</TableCell>
+              <TableCell>Transaction ID</TableCell>
+              <TableCell>Customer ID</TableCell>
+              <TableCell>Store ID</TableCell>
+              <TableCell>Shipper ID</TableCell>
               <TableCell>Payment Method</TableCell>
               <TableCell>Date and Time</TableCell>
+              <TableCell>Delivery Status</TableCell>
               <TableCell>Total Price</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="right">Actions</TableCell>
+              <TableCell>Total Weight</TableCell>
+              <TableCell align="center">Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {orders.map((order) => (
-              <TableRow key={order.id}>
-                <TableCell>{order.id}</TableCell>
-                <TableCell>{order.customerName}</TableCell>
-                <TableCell>{order.storeName}</TableCell>
-                <TableCell>{order.paymentMethod}</TableCell>
+            {displayedTransactions.map((tx) => (
+              <TableRow key={tx.transactionId}>
+                <TableCell>{tx.transactionId}</TableCell>
+                <TableCell>{tx.customerID}</TableCell>
+                <TableCell>{tx.storeID}</TableCell>
                 <TableCell>
-                  {new Date(order.dateAndTime).toLocaleString()}
+                  {tx.shipperID === "00000000-0000-0000-0000-000000000000"
+                    ? "N/A"
+                    : tx.shipperID}
                 </TableCell>
-                <TableCell>${order.totalPrice.toFixed(2)}</TableCell>
+                <TableCell>{tx.paymentMethod}</TableCell>
                 <TableCell>
-                  <FormControl variant="standard">
-                    <Select
-                      value={order.deliveryStatus}
-                      onChange={(e) =>
-                        handleStatusChange(order.id, e.target.value)
-                      }
-                    >
-                      {deliveryStatuses.map((status) => (
-                        <MenuItem key={status} value={status}>
-                          {status}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                  {new Date(tx.dateAndTime).toLocaleString()}
                 </TableCell>
-                <TableCell align="right">
-                  <IconButton
+                <TableCell>{getStatusText(tx.deliveryStatus)}</TableCell>
+                <TableCell>${tx.totalPrice.toFixed(2)}</TableCell>
+                <TableCell>{tx.totalWeight} g</TableCell>
+                <TableCell align="center">
+                  <Button
+                    variant="contained"
                     color="primary"
-                    onClick={() => handleViewOrder(order.id)}
+                    onClick={() => handleViewOrder(tx.transactionId)}
                   >
-                    <VisibilityIcon />
-                  </IconButton>
-                  {/* You can add more actions if needed */}
+                    View
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
-            {orders.length === 0 && (
+            {displayedTransactions.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} align="center">
-                  No orders found.
+                <TableCell colSpan={10} align="center">
+                  No transactions found.
                 </TableCell>
               </TableRow>
             )}
           </TableBody>
-          <OrderDetailsDialog
-            open={openDetailsDialog}
-            handleClose={() => setOpenDetailsDialog(false)}
-            orderId={selectedOrderId}
-          />
         </Table>
       </TableContainer>
+
+      {/* Pagination */}
+      <TablePagination
+        component="div"
+        count={transactions.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+      />
+
+      {/* Order Details Dialog */}
+      {selectedTransactionId && (
+        <OrderDetailsDialog
+          open={openDetailsDialog}
+          handleClose={() => {
+            setOpenDetailsDialog(false);
+            setSelectedTransactionId(null);
+          }}
+          transactionId={selectedTransactionId}
+        />
+      )}
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity={snackbar.severity}
+          sx={{ width: "100%" }}
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
