@@ -9,7 +9,7 @@ const MODEL_NAME = "gemini-1.5-pro-latest";
 const API_KEY = "AIzaSyDrTvAbeaL_i7ttAd_ORL07DhLYZzEO3LU";
 
 // Global variable to hold the initialized chat session
-let chatSession;
+let chatSession; // chatSession is a global variable to hold the initialized chat session
 
 export async function initializeChat() {
   try {
