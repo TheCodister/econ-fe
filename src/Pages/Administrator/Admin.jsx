@@ -1,6 +1,7 @@
 // src/Admin.jsx
 import React from 'react';
 import { Outlet } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import UserLayout from '../../Components/UserLayout/UserLayout';
 import {
   Dashboard as DashboardIcon,
@@ -15,6 +16,11 @@ import { useAuth } from '../../hooks/useAuth';
 const Admin = () => {
   const { user } = useAuth();
   const [open, setOpen] = React.useState(true);
+
+  // prevent unauthenticated users from accessing the admin page
+  if (!user || user.role !== 'Admin') {
+    return <Navigate to="/login" replace />;
+  }
 
   // Menu items for the admin sidebar
   const adminMenuItems = [

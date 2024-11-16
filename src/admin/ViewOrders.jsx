@@ -18,6 +18,7 @@ import {
   FormControl,
   Select,
   MenuItem,
+  TablePagination, // Import TablePagination
 } from "@mui/material";
 
 const ViewOrders = () => {
@@ -30,6 +31,10 @@ const ViewOrders = () => {
   const [filterStatus, setFilterStatus] = useState("");
   const [openDetailsDialog, setOpenDetailsDialog] = useState(false);
   const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+
+  // Pagination state
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
 
   const deliveryStatuses = [
     { value: 0, label: "Pending" },
@@ -50,7 +55,6 @@ const ViewOrders = () => {
       if (filterStatus !== "") {
         endpoint += `?status=${Number(filterStatus)}`; // Ensure status is a number
       }
-      console.log("Fetching transactions from:", endpoint); // Debugging line
       const response = await axios.get(endpoint, {
         headers: { "Content-Type": "application/json" },
         withCredentials: true,
@@ -87,18 +91,43 @@ const ViewOrders = () => {
   const handleStatusChange = (e) => {
     const value = e.target.value;
     setFilterStatus(value === "" ? "" : Number(value)); // Convert to number
+    setPage(0); // Reset to first page when filter changes
   };
+
+  // Handle pagination
+  const handleChangePage = (event, newPage) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0); // Reset to first page
+  };
+
+  // Transactions to display on the current page
+  const displayedTransactions = transactions.slice(
+    page * rowsPerPage,
+    page * rowsPerPage + rowsPerPage
+  );
 
   return (
     <Box>
-      <Typography variant="h4" gutterBottom>
+      <Typography
+        variant="h4"
+        gutterBottom
+        sx={{
+          fontWeight: 900,
+          fontFamily: "Quicksand, sans-serif",
+          color: "#fe3bd4",
+        }}
+      >
         View Orders
       </Typography>
       <FormControl sx={{ mb: 2, minWidth: 200 }}>
         <Select
           value={filterStatus}
           displayEmpty
-          onChange={handleStatusChange} // Updated handler
+          onChange={handleStatusChange}
         >
           <MenuItem value="">
             <em>All Statuses</em>
@@ -127,7 +156,7 @@ const ViewOrders = () => {
             </TableRow>
           </TableHead>
           <TableBody>
-            {transactions.map((tx) => (
+            {displayedTransactions.map((tx) => (
               <TableRow key={tx.transactionId}>
                 <TableCell>{tx.transactionId}</TableCell>
                 <TableCell>{tx.customerID}</TableCell>
@@ -155,7 +184,7 @@ const ViewOrders = () => {
                 </TableCell>
               </TableRow>
             ))}
-            {transactions.length === 0 && (
+            {displayedTransactions.length === 0 && (
               <TableRow>
                 <TableCell colSpan={10} align="center">
                   No transactions found.
@@ -165,6 +194,17 @@ const ViewOrders = () => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Pagination */}
+      <TablePagination
+        component="div"
+        count={transactions.length}
+        page={page}
+        onPageChange={handleChangePage}
+        rowsPerPage={rowsPerPage}
+        onRowsPerPageChange={handleChangeRowsPerPage}
+        rowsPerPageOptions={[5, 10, 25, 50]}
+      />
 
       {/* Order Details Dialog */}
       {selectedTransactionId && (
