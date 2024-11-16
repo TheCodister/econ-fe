@@ -48,7 +48,7 @@ const Profile = () => {
   const [openWheel, setOpenWheel] = useState(false);
   const [mustSpin, setMustSpin] = useState(false);
   const [prizeNumber, setPrizeNumber] = useState(0);
-  const [fortuneChances, setFortuneChances] = useState(1);
+  const [fortuneChances, setFortuneChances] = useState(0);
 
   // Snackbar state
   const [openSnackbar, setOpenSnackbar] = useState(false);
@@ -73,7 +73,15 @@ const Profile = () => {
 
   const fetchCustomerData = async (userId) => {
     try {
-      // Fetch customer promotions or other data if needed
+      const response = await axios.get(
+        `${import.meta.env.VITE_REACT_APP_API_URL}/customers/${userId}`,
+        {
+          headers: { "Content-Type": "application/json" },
+          withCredentials: true,
+        }
+      );
+      const SpinChances = response.data.fortuneChance ? response.data.fortuneChance : 0;
+      setFortuneChances(SpinChances);
     } catch (error) {
       console.error("Error fetching customer data:", error);
     }
@@ -296,7 +304,7 @@ const Profile = () => {
                 textColors={["#ffffff"]}
                 outerBorderColor={"#000000"}
                 outerBorderWidth={5}
-                innerRadius={30}
+                innerRadius={20}
                 radiusLineColor={"#ffffff"}
                 radiusLineWidth={8}
                 spinDuration={0.5}
