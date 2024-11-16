@@ -173,7 +173,7 @@ const CheckOut = () => {
               withCredentials: true,
             }
           );
-          console.log('Momo payment response:', response.data);
+          // console.log('Momo payment response:', response.data);
           // Redirect to the payment URL provided by the API
           if (response.data && response.data.payUrl) {
             window.location.href = response.data.payUrl;
@@ -215,7 +215,7 @@ const CheckOut = () => {
           name: fullName
         };
 
-        console.log('VNPay payment data:', paymentData);
+        // console.log('VNPay payment data:', paymentData);
 
         try {
           const response = await axios.post(

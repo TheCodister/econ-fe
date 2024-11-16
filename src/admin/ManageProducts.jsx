@@ -49,7 +49,7 @@ const ManageProducts = () => {
         const response = await axios.get(
           `${import.meta.env.VITE_REACT_APP_API_URL}/products/category/${selectedCategory}`
         );
-        console.log('Fetched products:', response.data);
+        // console.log('Fetched products:', response.data);
         setProducts(response.data);
       } catch (error) {
         console.error('Error fetching products:', error);
