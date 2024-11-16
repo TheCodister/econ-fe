@@ -1,23 +1,25 @@
 // CartContext.js
-import React, { createContext, useContext, useReducer } from 'react';
+import PropTypes from "prop-types";
+import { createContext, useContext, useReducer } from "react";
 
 const CartContext = createContext();
 
 const cartReducer = (state, action) => {
   switch (action.type) {
-    case 'ADD_TO_CART':
+    case "ADD_TO_CART":
       return {
         ...state,
         cart: [...state.cart, action.payload],
       };
-    case 'REMOVE_FROM_CART':
+    case "REMOVE_FROM_CART":
       return {
         ...state,
         cart: state.cart.filter((_, index) => index !== action.payload),
       };
-    case 'UPDATE_CART_ITEM':
+    case "UPDATE_CART_ITEM": {
       const updatedCart = state.cart.map((item) =>
-        item.ProductID === action.payload.ProductID && item.StoreID === action.payload.StoreID
+        item.ProductID === action.payload.ProductID &&
+        item.StoreID === action.payload.StoreID
           ? { ...item, Quantity: action.payload.Quantity }
           : item
       );
@@ -25,7 +27,8 @@ const cartReducer = (state, action) => {
         ...state,
         cart: updatedCart,
       };
-    case 'CLEAR_CART':
+    }
+    case "CLEAR_CART":
       return {
         ...state,
         cart: [],
@@ -45,11 +48,14 @@ export const CartProvider = ({ children }) => {
     </CartContext.Provider>
   );
 };
+CartProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
 
 export const useCart = () => {
   const context = useContext(CartContext);
   if (!context) {
-    throw new Error('useCart must be used within a CartProvider');
+    throw new Error("useCart must be used within a CartProvider");
   }
   return context;
 };
