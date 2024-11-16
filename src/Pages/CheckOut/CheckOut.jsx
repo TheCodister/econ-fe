@@ -193,6 +193,61 @@ const CheckOut = () => {
         return;
       }
 
+      else if (selectedPaymentMethod === 'VNPay') {
+        // Generate random 32-character orderId
+        const orderType = 'other';
+        const fullName = `${user.fName} ${user.lName}`;
+
+        // Fix total to 2 decimal places
+        let amountInUSD = parseFloat(total.toFixed(2)); // Convert to 2 decimal places
+
+        // Define exchange rate
+        const exchangeRate = 25000; // 1 USD = 25,000 VND
+
+        // Convert to VND
+        let amountInVND = Math.round(amountInUSD * exchangeRate); // Convert and round to nearest integer
+
+        const paymentData = {
+          orderType: orderType,
+          amount: amountInVND,
+          fullName: fullName,
+          orderDescription: "New bill",
+          name: fullName
+        };
+
+        console.log('VNPay payment data:', paymentData);
+
+        try {
+          const response = await axios.post(
+            `${import.meta.env.VITE_REACT_APP_API_URL}/payment/vnpay`,
+            paymentData,
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              withCredentials: true,
+            }
+          );
+          console.log('VNPay payment response:', response.data);
+          // Redirect to the payment URL provided by the API
+          if (response.data) {
+            window.location.href = response.data;
+          } else {
+            throw new Error('Invalid response from payment gateway.');
+          }
+        } catch (error) {
+          console.error('Error initiating VNPay payment:', error);
+          toast.error('There was an error initiating VNPay payment. Please try again.', {
+            position: 'bottom-left',
+            autoClose: 5000,
+            hideProgressBar: false,
+            theme: 'colored',
+          });
+          setIsProcessing(false);
+        }
+        return;
+      }
+
       const itemsByStore = state.cart.reduce((result, item) => {
         const storeID = item.storeID;
         if (!result[storeID]) {
@@ -593,11 +648,11 @@ const CheckOut = () => {
                     <label>
                       <input
                         type="radio"
-                        value="Credit Card"
-                        checked={selectedPaymentMethod === 'Credit Card'}
+                        value="VNPay"
+                        checked={selectedPaymentMethod === 'VNPay'}
                         onChange={handlePaymentMethodChange}
                       />
-                      Credit Card
+                      VNPay
                     </label>
                   </div>
                   <div>
